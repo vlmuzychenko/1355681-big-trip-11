@@ -1,7 +1,7 @@
 # Личный проект «Большое путешествие» [![Build status][travis-image]][travis-url]
 
 * Студент: [Влад](https://up.htmlacademy.ru/ecmascript/11/user/1355681).
-* Наставник: `Неизвестно`.
+* Наставник: `Андрей Фидельман`.
 
 ---
 
