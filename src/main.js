@@ -1,51 +1,89 @@
 import moment from "moment";
-import {createTripInfoWrapTemplate} from "./components/trip-info-wrap.js";
-import {createTripInfoTemplate} from "./components/trip-info.js";
-import {createTripCostTemplate} from "./components/trip-cost.js";
-import {createMenuTemplate} from "./components/menu.js";
-import {createFiltersTemplate} from "./components/filters.js";
-import {createSortTemplate} from "./components/sort.js";
-import {createDaysWrapTemplate} from "./components/days-wrap.js";
-import {createDayTemplate} from "./components/day.js";
+import TripInfoWrap from "./components/trip-info-wrap.js";
+import TripInfo from "./components/trip-info.js";
+import Cost from "./components/trip-cost.js";
+import Menu from "./components/menu.js";
+import Filters from "./components/filters.js";
+import Sort from "./components/sort.js";
+import TripDaysComponent from "./components/trip-days.js";
+import Day from "./components/day.js";
+import Form from "./components/form.js";
+import Waypoint from "./components/waypoint.js";
 import {generateWaypoints} from "./mock/waypoint.js";
+import {render, RenderPosition} from "./utils.js";
 
-const render = (container, template, place = `beforeend`) => {
-  container.insertAdjacentHTML(place, template);
-};
+const WAYPOINTS_COUNT = 15;
 
 const tripHeaderElement = document.querySelector(`.trip-main`);
-render(tripHeaderElement, createTripInfoWrapTemplate(), `afterbegin`);
+render(tripHeaderElement, new TripInfoWrap().getElement(), RenderPosition.AFTERBEGIN);
 
 const tripInfoWrapElement = document.querySelector(`.trip-info`);
-render(tripInfoWrapElement, createTripInfoTemplate());
-render(tripInfoWrapElement, createTripCostTemplate());
+render(tripInfoWrapElement, new TripInfo().getElement(), RenderPosition.BEFOREEND);
+render(tripInfoWrapElement, new Cost().getElement(), RenderPosition.BEFOREEND);
 
 const tripControlsElement = document.querySelector(`.trip-controls`);
 const [menuTitleElement, filterTitleElement] = tripControlsElement.children;
-render(menuTitleElement, createMenuTemplate(), `afterend`);
-render(filterTitleElement, createFiltersTemplate(), `afterend`);
+render(menuTitleElement, new Menu().getElement(), RenderPosition.AFTEREND);
+render(filterTitleElement, new Filters().getElement(), RenderPosition.AFTEREND);
 
-const tripEventsElement = document.querySelector(`.trip-events`);
-render(tripEventsElement, createSortTemplate());
-render(tripEventsElement, createDaysWrapTemplate());
+const renderTripDays = (tripDaysComponent, waypoints) => {
+  const daysListElement = tripDaysComponent.getElement();
 
-const daysWrapElement = document.querySelector(`.trip-days`);
-const WAYPOINTS_COUNT = 15;
-const waypoints = generateWaypoints(WAYPOINTS_COUNT);
-const dates = [];
-for (let data of waypoints) {
-  dates.push(moment.utc(data.startTime).format(`YYYY-MM-DD`));
-}
-const unrepeatedDates = [...new Set(dates)];
+  const dates = [];
+  for (let data of waypoints) {
+    dates.push(moment.utc(data.startTime).format(`YYYY-MM-DD`));
+  }
+  const unrepeatedDates = [...new Set(dates)];
 
-unrepeatedDates.sort((a, b) => {
-  return a - b;
-});
-
-for (let i = 0; i < unrepeatedDates.length; i++) {
-  const waypointsByDay = waypoints.filter((waypoint) => {
-    return moment.utc(waypoint.startTime).format(`YYYY-MM-DD`) === unrepeatedDates[i];
+  unrepeatedDates.sort((a, b) => {
+    return a - b;
   });
 
-  render(daysWrapElement, createDayTemplate(i, waypointsByDay));
-}
+  for (let i = 0; i < unrepeatedDates.length; i++) {
+    const waypointsByDay = waypoints.filter((waypoint) => {
+      return moment.utc(waypoint.startTime).format(`YYYY-MM-DD`) === unrepeatedDates[i];
+    });
+
+    renderDay(daysListElement, i, waypointsByDay);
+  }
+};
+
+const renderDay = (daysListElement, index, waypoints) => {
+  const dayComponent = new Day(index, waypoints);
+  const waypointListElement = dayComponent.getElement().querySelector(`.trip-events__list`);
+
+  waypoints.forEach((waypoint) => {
+    renderWaypoint(waypointListElement, waypoint);
+  });
+
+  render(daysListElement, dayComponent.getElement(), RenderPosition.BEFOREEND);
+};
+
+const renderWaypoint = (dayListElement, waypoint) => {
+  const onEditButtonClick = () => {
+    dayListElement.replaceChild(waypointEditComponent.getElement(), waypointComponent.getElement());
+  };
+
+  const onEditFormSubmit = (event) => {
+    event.preventDefault();
+    dayListElement.replaceChild(waypointComponent.getElement(), waypointEditComponent.getElement());
+  };
+
+  const waypointComponent = new Waypoint(waypoint);
+  const editButton = waypointComponent.getElement().querySelector(`.event__rollup-btn`);
+  editButton.addEventListener(`click`, onEditButtonClick);
+
+  const waypointEditComponent = new Form(waypoint);
+  const editForm = waypointEditComponent.getElement().querySelector(`form`);
+  editForm.addEventListener(`submit`, onEditFormSubmit);
+
+  render(dayListElement, waypointComponent.getElement(), RenderPosition.BEFOREEND);
+};
+
+const waypoints = generateWaypoints(WAYPOINTS_COUNT);
+
+const tripDaysComponent = new TripDaysComponent();
+const tripEventsElement = document.querySelector(`.trip-events`);
+render(tripEventsElement, new Sort().getElement(), RenderPosition.BEFOREEND);
+render(tripEventsElement, tripDaysComponent.getElement(), RenderPosition.BEFOREEND);
+renderTripDays(tripDaysComponent, waypoints);
