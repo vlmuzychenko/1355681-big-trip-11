@@ -28,16 +28,8 @@ render(filterTitleElement, new Filters().getElement(), RenderPosition.AFTEREND);
 
 const renderTripDays = (tripDaysComponent, waypoints) => {
   const daysListElement = tripDaysComponent.getElement();
-
-  const dates = [];
-  for (let data of waypoints) {
-    dates.push(moment.utc(data.startTime).format(`YYYY-MM-DD`));
-  }
-  const unrepeatedDates = [...new Set(dates)];
-
-  unrepeatedDates.sort((a, b) => {
-    return a - b;
-  });
+  const dates = Object.values(waypoints).map((waypoint) => moment.utc(waypoint.startTime).format(`YYYY-MM-DD`));
+  const unrepeatedDates = [...new Set(dates)].sort((a, b) => a - b);
 
   for (let i = 0; i < unrepeatedDates.length; i++) {
     const waypointsByDay = waypoints.filter((waypoint) => {

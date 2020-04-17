@@ -7,7 +7,7 @@ const createDaysWrapTemplate = () => {
   );
 };
 
-export default class tripDays {
+export default class TripDays {
   constructor() {
     this._element = null;
   }
