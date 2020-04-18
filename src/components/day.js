@@ -1,30 +1,44 @@
 import moment from "moment";
-import {createFormTemplate} from "./form.js";
-import {createWaypointTemplate} from "./waypoint.js";
+import {createElement} from "../utils.js";
 
 const createDayTemplate = (index, waypointsByDay) => {
-  const createWaypointsTemplate = (waypoints) => {
-    return waypoints
-      .map((waypoint) => {
-        return createWaypointTemplate(waypoint);
-      })
-      .join(``);
-  };
+  const date = moment.utc(new Date(waypointsByDay[0].startTime)).format(`YYYY-MM-DD`);
+  const visibleDate = moment.utc(new Date(waypointsByDay[0].startTime)).format(`D MMM`);
 
   return (
     `<li class="trip-days__item  day">
       <div class="day__info">
         <span class="day__counter">${index + 1}</span>
-        <time class="day__date" datetime="${moment.utc(new Date(waypointsByDay[0].startTime)).format(`YYYY-MM-DD`)}">${moment.utc(new Date(waypointsByDay[0].startTime)).format(`D MMM`)}</time>
+        <time class="day__date" datetime="${date}">${visibleDate}</time>
       </div>
 
       <ul class="trip-events__list">
-      ${index === 0 ? createFormTemplate(waypointsByDay[index]) : ``}
-
-      ${createWaypointsTemplate(waypointsByDay)}
       </ul>
     </li>`
   );
 };
 
-export {createDayTemplate};
+export default class Day {
+  constructor(index, waypoints) {
+    this._waypoints = waypoints;
+    this._index = index;
+
+    this._element = null;
+  }
+
+  getTemplate() {
+    return createDayTemplate(this._index, this._waypoints);
+  }
+
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  removeElement() {
+    this._element = null;
+  }
+}

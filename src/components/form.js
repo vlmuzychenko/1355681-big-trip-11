@@ -1,5 +1,6 @@
 import moment from "moment";
 import {TYPES} from "../const.js";
+import {createElement} from "../utils.js";
 
 const createTypesTemplate = (currentType, types) => {
   return types
@@ -53,8 +54,14 @@ const createOffersWrapTemplate = (offersByType, currentOffers) => {
   );
 };
 
-export const createFormTemplate = (waypoint) => {
+const createFormTemplate = (waypoint) => {
   const {currentType, city, currentOffers, offersByType, startTime, endTime, price} = waypoint;
+  const transferTypes = createTypesTemplate(currentType, TYPES.transfer);
+  const activityTypes = createTypesTemplate(currentType, TYPES.activity);
+  const destination = `${currentType} ${TYPES.transfer.some((type) => currentType === type) ? `to` : `in`}`;
+  const offers = offersByType.length ? createOffersWrapTemplate(offersByType, currentOffers) : ``;
+  const start = moment.utc(new Date(startTime)).format(`DD/MM/YY HH:mm`);
+  const end = moment.utc(new Date(endTime)).format(`DD/MM/YY HH:mm`);
 
   return (
     `<li class="trip-events__item">
@@ -70,19 +77,19 @@ export const createFormTemplate = (waypoint) => {
             <div class="event__type-list">
               <fieldset class="event__type-group">
                 <legend class="visually-hidden">Transfer</legend>
-                ${createTypesTemplate(currentType, TYPES.transfer)}
+                ${transferTypes}
               </fieldset>
 
               <fieldset class="event__type-group">
                 <legend class="visually-hidden">Activity</legend>
-                ${createTypesTemplate(currentType, TYPES.activity)}
+                ${activityTypes}
               </fieldset>
             </div>
           </div>
 
           <div class="event__field-group  event__field-group--destination">
             <label class="event__label  event__type-output" for="event-destination-1">
-              ${currentType} ${TYPES.transfer.some((type) => currentType === type) ? `to` : `in`}
+              ${destination}
             </label>
             <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${city}" list="destination-list-1">
             <datalist id="destination-list-1">
@@ -96,12 +103,12 @@ export const createFormTemplate = (waypoint) => {
             <label class="visually-hidden" for="event-start-time-1">
               From
             </label>
-            <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${moment.utc(new Date(startTime)).format(`DD/MM/YY HH:mm`)}">
+            <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${start}">
             &mdash;
             <label class="visually-hidden" for="event-end-time-1">
               To
             </label>
-            <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${moment.utc(new Date(endTime)).format(`DD/MM/YY HH:mm`)}">
+            <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${end}">
           </div>
 
           <div class="event__field-group  event__field-group--price">
@@ -127,8 +134,31 @@ export const createFormTemplate = (waypoint) => {
             <span class="visually-hidden">Open event</span>
           </button>
         </header>
-        ${offersByType.length ? createOffersWrapTemplate(offersByType, currentOffers) : ``}
+        ${offers}
       </form>
     </li>`
   );
 };
+
+export default class Form {
+  constructor(waypoint) {
+    this._waypoint = waypoint;
+    this._element = null;
+  }
+
+  getTemplate() {
+    return createFormTemplate(this._waypoint);
+  }
+
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  removeElement() {
+    this._element = null;
+  }
+}
