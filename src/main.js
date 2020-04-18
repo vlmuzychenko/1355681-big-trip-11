@@ -9,6 +9,7 @@ import TripDaysComponent from "./components/trip-days.js";
 import Day from "./components/day.js";
 import Form from "./components/form.js";
 import Waypoint from "./components/waypoint.js";
+import NoWaypoints from "./components/no-waypoints.js";
 import {generateWaypoints} from "./mock/waypoint.js";
 import {render, RenderPosition} from "./utils.js";
 
@@ -28,6 +29,7 @@ render(filterTitleElement, new Filters().getElement(), RenderPosition.AFTEREND);
 
 const renderTripDays = (tripDaysComponent, waypoints) => {
   const daysListElement = tripDaysComponent.getElement();
+
   const dates = Object.values(waypoints).map((waypoint) => moment.utc(waypoint.startTime).format(`YYYY-MM-DD`));
   const unrepeatedDates = [...new Set(dates)].sort((a, b) => a - b);
 
@@ -52,30 +54,51 @@ const renderDay = (daysListElement, index, waypoints) => {
 };
 
 const renderWaypoint = (dayListElement, waypoint) => {
-  const onEditButtonClick = () => {
+  const replaceWaypointToEdit = () => {
     dayListElement.replaceChild(waypointEditComponent.getElement(), waypointComponent.getElement());
   };
 
-  const onEditFormSubmit = (event) => {
-    event.preventDefault();
+  const replaceEditToWaypoint = () => {
     dayListElement.replaceChild(waypointComponent.getElement(), waypointEditComponent.getElement());
+  };
+
+  const onEscKeyDown = (event) => {
+    const isEscKey = event.key === `Escape` || event.key === `Esc`;
+
+    if (isEscKey) {
+      replaceEditToWaypoint();
+      document.removeEventListener(`keydown`, onEscKeyDown);
+    }
   };
 
   const waypointComponent = new Waypoint(waypoint);
   const editButton = waypointComponent.getElement().querySelector(`.event__rollup-btn`);
-  editButton.addEventListener(`click`, onEditButtonClick);
+  editButton.addEventListener(`click`, () => {
+    replaceWaypointToEdit();
+    document.addEventListener(`keydown`, onEscKeyDown);
+  });
 
   const waypointEditComponent = new Form(waypoint);
   const editForm = waypointEditComponent.getElement().querySelector(`form`);
-  editForm.addEventListener(`submit`, onEditFormSubmit);
+  editForm.addEventListener(`submit`, (event) => {
+    event.preventDefault();
+    replaceEditToWaypoint();
+    document.removeEventListener(`keydown`, onEscKeyDown);
+  });
 
   render(dayListElement, waypointComponent.getElement(), RenderPosition.BEFOREEND);
 };
 
 const waypoints = generateWaypoints(WAYPOINTS_COUNT);
-
-const tripDaysComponent = new TripDaysComponent();
 const tripEventsElement = document.querySelector(`.trip-events`);
-render(tripEventsElement, new Sort().getElement(), RenderPosition.BEFOREEND);
-render(tripEventsElement, tripDaysComponent.getElement(), RenderPosition.BEFOREEND);
-renderTripDays(tripDaysComponent, waypoints);
+
+if (waypoints.length) {
+  const tripDaysComponent = new TripDaysComponent();
+
+  render(tripEventsElement, new Sort().getElement(), RenderPosition.BEFOREEND);
+  render(tripEventsElement, tripDaysComponent.getElement(), RenderPosition.BEFOREEND);
+  renderTripDays(tripDaysComponent, waypoints);
+} else {
+  render(tripEventsElement, new NoWaypoints().getElement(), RenderPosition.BEFOREEND);
+}
+
