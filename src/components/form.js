@@ -1,6 +1,6 @@
 import moment from "moment";
 import {TYPES} from "../const.js";
-import {createElement} from "../utils.js";
+import AbstractComponent from "./abstract-component.js";
 
 const createTypesTemplate = (currentType, types) => {
   return types
@@ -140,25 +140,17 @@ const createFormTemplate = (waypoint) => {
   );
 };
 
-export default class Form {
+export default class Form extends AbstractComponent {
   constructor(waypoint) {
+    super();
     this._waypoint = waypoint;
-    this._element = null;
   }
 
   getTemplate() {
     return createFormTemplate(this._waypoint);
   }
 
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
+  setSubmitHandler(handler) {
+    this.getElement().querySelector(`form`).addEventListener(`submit`, handler);
   }
 }

@@ -1,6 +1,6 @@
 import moment from "moment";
 import {TYPES} from "../const.js";
-import {createElement} from "../utils.js";
+import AbstractComponent from "./abstract-component.js";
 
 const createOffersTemplate = (offers) => {
   return offers
@@ -55,26 +55,17 @@ const createWaypointTemplate = (waypoint) => {
   );
 };
 
-export default class Waypoint {
+export default class Waypoint extends AbstractComponent {
   constructor(waypoint) {
+    super();
     this._waypoint = waypoint;
-
-    this._element = null;
   }
 
   getTemplate() {
     return createWaypointTemplate(this._waypoint);
   }
 
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
+  setEditButtonClickHandler(handler) {
+    this.getElement().querySelector(`.event__rollup-btn`).addEventListener(`click`, handler);
   }
 }

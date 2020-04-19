@@ -1,5 +1,5 @@
 import moment from "moment";
-import {getRandomArrayItem, getRandomIntegerNumber} from "../utils.js";
+import {getRandomArrayItem, getRandomIntegerNumber} from "../utils/common.js";
 import {EXAMPLE_CITY_DESCR, TYPES, CITIES, OFFERS} from "../const.js";
 
 const getOffersByType = (type, offers) => {

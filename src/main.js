@@ -1,104 +1,31 @@
-import moment from "moment";
-import TripInfoWrap from "./components/trip-info-wrap.js";
-import TripInfo from "./components/trip-info.js";
-import Cost from "./components/trip-cost.js";
-import Menu from "./components/menu.js";
-import Filters from "./components/filters.js";
-import Sort from "./components/sort.js";
+import TripInfoWrapComponent from "./components/trip-info-wrap.js";
+import TripInfoComponent from "./components/trip-info.js";
+import CostComponent from "./components/trip-cost.js";
+import MenuComponent from "./components/menu.js";
+import FiltersComponent from "./components/filters.js";
 import TripDaysComponent from "./components/trip-days.js";
-import Day from "./components/day.js";
-import Form from "./components/form.js";
-import Waypoint from "./components/waypoint.js";
-import NoWaypoints from "./components/no-waypoints.js";
+import TripController from "./controllers/trip.js";
 import {generateWaypoints} from "./mock/waypoint.js";
-import {render, RenderPosition} from "./utils.js";
-
-const WAYPOINTS_COUNT = 15;
+import {render, RenderPosition} from "./utils/render.js";
 
 const tripHeaderElement = document.querySelector(`.trip-main`);
-render(tripHeaderElement, new TripInfoWrap().getElement(), RenderPosition.AFTERBEGIN);
+render(tripHeaderElement, new TripInfoWrapComponent(), RenderPosition.AFTERBEGIN);
 
 const tripInfoWrapElement = document.querySelector(`.trip-info`);
-render(tripInfoWrapElement, new TripInfo().getElement(), RenderPosition.BEFOREEND);
-render(tripInfoWrapElement, new Cost().getElement(), RenderPosition.BEFOREEND);
+render(tripInfoWrapElement, new TripInfoComponent(), RenderPosition.BEFOREEND);
+render(tripInfoWrapElement, new CostComponent(), RenderPosition.BEFOREEND);
 
 const tripControlsElement = document.querySelector(`.trip-controls`);
 const [menuTitleElement, filterTitleElement] = tripControlsElement.children;
-render(menuTitleElement, new Menu().getElement(), RenderPosition.AFTEREND);
-render(filterTitleElement, new Filters().getElement(), RenderPosition.AFTEREND);
+render(menuTitleElement, new MenuComponent(), RenderPosition.AFTEREND);
+render(filterTitleElement, new FiltersComponent(), RenderPosition.AFTEREND);
 
-const renderTripDays = (tripDaysComponent, waypoints) => {
-  const daysListElement = tripDaysComponent.getElement();
-
-  const dates = Object.values(waypoints).map((waypoint) => moment.utc(waypoint.startTime).format(`YYYY-MM-DD`));
-  const unrepeatedDates = [...new Set(dates)].sort((a, b) => a - b);
-
-  for (let i = 0; i < unrepeatedDates.length; i++) {
-    const waypointsByDay = waypoints.filter((waypoint) => {
-      return moment.utc(waypoint.startTime).format(`YYYY-MM-DD`) === unrepeatedDates[i];
-    });
-
-    renderDay(daysListElement, i, waypointsByDay);
-  }
-};
-
-const renderDay = (daysListElement, index, waypoints) => {
-  const dayComponent = new Day(index, waypoints);
-  const waypointListElement = dayComponent.getElement().querySelector(`.trip-events__list`);
-
-  waypoints.forEach((waypoint) => {
-    renderWaypoint(waypointListElement, waypoint);
-  });
-
-  render(daysListElement, dayComponent.getElement(), RenderPosition.BEFOREEND);
-};
-
-const renderWaypoint = (dayListElement, waypoint) => {
-  const replaceWaypointToEdit = () => {
-    dayListElement.replaceChild(waypointEditComponent.getElement(), waypointComponent.getElement());
-  };
-
-  const replaceEditToWaypoint = () => {
-    dayListElement.replaceChild(waypointComponent.getElement(), waypointEditComponent.getElement());
-  };
-
-  const onEscKeyDown = (event) => {
-    const isEscKey = event.key === `Escape` || event.key === `Esc`;
-
-    if (isEscKey) {
-      replaceEditToWaypoint();
-      document.removeEventListener(`keydown`, onEscKeyDown);
-    }
-  };
-
-  const waypointComponent = new Waypoint(waypoint);
-  const editButton = waypointComponent.getElement().querySelector(`.event__rollup-btn`);
-  editButton.addEventListener(`click`, () => {
-    replaceWaypointToEdit();
-    document.addEventListener(`keydown`, onEscKeyDown);
-  });
-
-  const waypointEditComponent = new Form(waypoint);
-  const editForm = waypointEditComponent.getElement().querySelector(`form`);
-  editForm.addEventListener(`submit`, (event) => {
-    event.preventDefault();
-    replaceEditToWaypoint();
-    document.removeEventListener(`keydown`, onEscKeyDown);
-  });
-
-  render(dayListElement, waypointComponent.getElement(), RenderPosition.BEFOREEND);
-};
-
+const WAYPOINTS_COUNT = 15;
 const waypoints = generateWaypoints(WAYPOINTS_COUNT);
 const tripEventsElement = document.querySelector(`.trip-events`);
 
-if (waypoints.length) {
-  const tripDaysComponent = new TripDaysComponent();
+const tripDaysComponent = new TripDaysComponent();
+const tripController = new TripController(tripDaysComponent);
 
-  render(tripEventsElement, new Sort().getElement(), RenderPosition.BEFOREEND);
-  render(tripEventsElement, tripDaysComponent.getElement(), RenderPosition.BEFOREEND);
-  renderTripDays(tripDaysComponent, waypoints);
-} else {
-  render(tripEventsElement, new NoWaypoints().getElement(), RenderPosition.BEFOREEND);
-}
-
+render(tripEventsElement, tripDaysComponent, RenderPosition.BEFOREEND);
+tripController.render(waypoints);
