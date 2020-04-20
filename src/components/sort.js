@@ -1,4 +1,10 @@
-import {createElement} from "../utils.js";
+import AbstractComponent from "./abstract-component.js";
+
+export const SortType = {
+  DURATION_DOWN: `sort-time`,
+  PRICE_DOWN: `sort-price`,
+  DEFAULT: `sort-event`,
+};
 
 const createSortTemplate = () => {
   return (
@@ -6,20 +12,20 @@ const createSortTemplate = () => {
       <span class="trip-sort__item  trip-sort__item--day"></span>
 
       <div class="trip-sort__item  trip-sort__item--event">
-        <input id="sort-event" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort" value="sort-event">
-        <label class="trip-sort__btn" for="sort-event">Event</label>
+        <input id="sort-event" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort" value="${SortType.DEFAULT}" checked>
+        <label class="trip-sort__btn" for="${SortType.DEFAULT}">Event</label>
       </div>
 
       <div class="trip-sort__item  trip-sort__item--time">
-        <input id="sort-time" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort" value="sort-time" checked>
-        <label class="trip-sort__btn  trip-sort__btn--active  trip-sort__btn--by-increase" for="sort-time">
+        <input id="sort-time" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort" value="${SortType.DURATION_DOWN}">
+        <label class="trip-sort__btn" for="${SortType.DURATION_DOWN}">
           Time
         </label>
       </div>
 
       <div class="trip-sort__item  trip-sort__item--price">
-        <input id="sort-price" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort" value="sort-price">
-        <label class="trip-sort__btn" for="sort-price">
+        <input id="sort-price" class="trip-sort__input  visually-hidden" type="radio" name="trip-sort" value="${SortType.PRICE_DOWN}">
+        <label class="trip-sort__btn" for="${SortType.PRICE_DOWN}">
           Price
         </label>
       </div>
@@ -29,24 +35,38 @@ const createSortTemplate = () => {
   );
 };
 
-export default class Sort {
+export default class Sort extends AbstractComponent {
   constructor() {
-    this._element = null;
+    super();
+
+    this._curentSortType = SortType.DEFAULT;
   }
 
   getTemplate() {
     return createSortTemplate();
   }
 
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
+  getSortType() {
+    return this._curentSortType;
   }
 
-  removeElement() {
-    this._element = null;
+  setSortTypeChangeHandler(handler) {
+    this.getElement().addEventListener(`change`, (event) => {
+      event.preventDefault();
+
+      if (event.target.tagName !== `INPUT`) {
+        return;
+      }
+
+      const sortType = event.target.value;
+
+      if (this._curentSortType === sortType) {
+        return;
+      }
+
+      this._curentSortType = sortType;
+
+      handler(this._curentSortType);
+    });
   }
 }

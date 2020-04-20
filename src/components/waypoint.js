@@ -1,6 +1,6 @@
 import moment from "moment";
 import {TYPES} from "../const.js";
-import {createElement} from "../utils.js";
+import AbstractComponent from "./abstract-component.js";
 
 const createOffersTemplate = (offers) => {
   return offers
@@ -16,10 +16,25 @@ const createOffersTemplate = (offers) => {
     .join(`\n`);
 };
 
+const castomizeTimeFormat = (time, value) => {
+  return value < 10 ? `0${time}${value}` : `${time}${value}`;
+};
+
+const getDateDifference = (startDate, endDate) => {
+  const diff = moment.utc(new Date(endDate)).diff(startDate);
+  const duration = moment.duration(diff);
+  let days = duration.days() ? castomizeTimeFormat(duration.days(), `D`) : ``;
+  let hours = duration.hours() ? castomizeTimeFormat(duration.hours(), `H`) : ``;
+  let minutes = duration.minutes() ? castomizeTimeFormat(duration.minutes(), `M`) : ``;
+
+  return `${days} ${hours} ${minutes}`;
+};
+
 const createWaypointTemplate = (waypoint) => {
-  const {currentType, city, currentOffers, startTime, endTime, diffTime, price} = waypoint;
+  const {currentType, city, currentOffers, startTime, endTime, price} = waypoint;
   const eventOffers = currentOffers.length ? createOffersTemplate(currentOffers) : ``;
   const eventTitle = `${currentType} ${TYPES.transfer.some((type) => currentType === type) ? `to` : `in`} ${city}`;
+  const diffTime = getDateDifference(startTime, endTime);
 
   return (
     `<li class="trip-events__item">
@@ -55,26 +70,17 @@ const createWaypointTemplate = (waypoint) => {
   );
 };
 
-export default class Waypoint {
+export default class Waypoint extends AbstractComponent {
   constructor(waypoint) {
+    super();
     this._waypoint = waypoint;
-
-    this._element = null;
   }
 
   getTemplate() {
     return createWaypointTemplate(this._waypoint);
   }
 
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
-  }
-
-  removeElement() {
-    this._element = null;
+  setEditButtonClickHandler(handler) {
+    this.getElement().querySelector(`.event__rollup-btn`).addEventListener(`click`, handler);
   }
 }

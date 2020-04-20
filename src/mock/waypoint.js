@@ -1,5 +1,5 @@
 import moment from "moment";
-import {getRandomArrayItem, getRandomIntegerNumber} from "../utils.js";
+import {getRandomArrayItem, getRandomIntegerNumber} from "../utils/common.js";
 import {EXAMPLE_CITY_DESCR, TYPES, CITIES, OFFERS} from "../const.js";
 
 const getOffersByType = (type, offers) => {
@@ -28,20 +28,6 @@ const getRandomPhotos = (count) => {
   return photos;
 };
 
-const castomizeTimeFormat = (time, value) => {
-  return value < 10 ? `0${time}${value}` : `${time}${value}`;
-};
-
-const getDateDifference = (startDate, endDate) => {
-  const diff = moment.utc(new Date(endDate)).diff(startDate);
-  const duration = moment.duration(diff);
-  let days = duration.days() ? castomizeTimeFormat(duration.days(), `D`) : ``;
-  let hours = duration.hours() ? castomizeTimeFormat(duration.hours(), `H`) : ``;
-  let minutes = duration.minutes() ? castomizeTimeFormat(duration.minutes(), `M`) : ``;
-
-  return `${days} ${hours} ${minutes}`;
-};
-
 const generateWaypoint = () => {
   const currentType = getRandomArrayItem([...TYPES.transfer, ...TYPES.activity]);
   const city = getRandomArrayItem(CITIES);
@@ -52,7 +38,6 @@ const generateWaypoint = () => {
   const price = getRandomIntegerNumber(50, 1000);
   const startTime = moment.utc(new Date(+(new Date()) - Math.floor(Math.random() * 10000000000))).format();
   const endTime = moment.utc(startTime).add(getRandomIntegerNumber(1, 24), `h`).add(getRandomIntegerNumber(1, 60), `m`).format();
-  const diffTime = getDateDifference(startTime, endTime);
 
   return {
     currentType,
@@ -65,7 +50,6 @@ const generateWaypoint = () => {
     },
     startTime,
     endTime,
-    diffTime,
     price
   };
 };
