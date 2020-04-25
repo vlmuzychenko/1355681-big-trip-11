@@ -1,15 +1,26 @@
 import moment from "moment";
-import {TYPES} from "../const.js";
-import AbstractComponent from "./abstract-component.js";
+import {TYPES, CITIES, CITIES_INFO, OFFERS} from "../const.js";
+import {getCapitalizedString} from "../utils/common.js";
+import AbstractSmartComponent from "./abstract-smart-component.js";
 
 const createTypesTemplate = (currentType, types) => {
   return types
     .map((type) => {
       return (
         `<div class="event__type-item">
-          <input id="event-type-taxi-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type.toLowerCase()}" ${currentType === type ? `checked` : ``}>
+          <input id="event-type-${type.toLowerCase()}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type.toLowerCase()}" ${currentType === type ? `checked` : ``}>
           <label class="event__type-label  event__type-label--${type.toLowerCase()}" for="event-type-${type.toLowerCase()}-1">${type}</label>
         </div>`
+      );
+    })
+    .join(`\n`);
+};
+
+const createDestinationsTemplate = (cities) => {
+  return cities
+    .map((city) => {
+      return (
+        `<option value="${city}"></option>`
       );
     })
     .join(`\n`);
@@ -42,26 +53,73 @@ const createOffersTemplate = (offersByType, currentOffers) => {
 
 const createOffersWrapTemplate = (offersByType, currentOffers) => {
   return (
-    `<section class="event__details">
-      <section class="event__section  event__section--offers">
-        <h3 class="event__section-title  event__section-title--offers">Offers</h3>
-
-        <div class="event__available-offers">
-          ${createOffersTemplate(offersByType, currentOffers)}
-        </div>
-      </section>
+    `<section class="event__section  event__section--offers">
+      <h3 class="event__section-title  event__section-title--offers">Offers</h3>
+      <div class="event__available-offers">
+        ${createOffersTemplate(offersByType, currentOffers)}
+      </div>
     </section>`
   );
 };
 
-const createFormTemplate = (waypoint) => {
-  const {currentType, city, currentOffers, offersByType, startTime, endTime, price} = waypoint;
+const createDescriptionTemplate = (description) => {
+  return (
+    `<p class="event__destination-description">${description}</p>`
+  );
+};
+
+const createPhotosTemplate = (photos) => {
+  return photos
+    .map((photo) => {
+      return (
+        `<img class="event__photo" src="${photo}" alt="Event photo">`
+      );
+    })
+    .join(`\n`);
+};
+
+
+const createDestinationInfoTemplate = (info) => {
+  const description = info.description.length ? createDescriptionTemplate(info.description) : ``;
+  const photos = info.photos.length ? createPhotosTemplate(info.photos) : ``;
+
+  return (
+    `<section class="event__section  event__section--destination">
+      <h3 class="event__section-title  event__section-title--destination">Destination</h3>
+      ${description}
+
+      <div class="event__photos-container">
+        <div class="event__photos-tape">
+          ${photos}
+        </div>
+      </div>
+    </section>`
+  );
+};
+
+const createDetailsTemplate = (currentOffers, offersByType, info) => {
+  const offers = offersByType.length ? createOffersWrapTemplate(offersByType, currentOffers) : ``;
+  const destinationInfo = info.description.length || info.photos.length ? createDestinationInfoTemplate(info) : ``;
+
+  return (
+    `<section class="event__details">
+      ${offers}
+      ${destinationInfo}
+    </section>`
+  );
+};
+
+const createFormTemplate = (waypoint, options = {}) => {
+  const {currentOffers, startTime, endTime, price, isFavorite} = waypoint;
+  const {currentType, currentCity, offersByType, info} = options;
   const transferTypes = createTypesTemplate(currentType, TYPES.transfer);
   const activityTypes = createTypesTemplate(currentType, TYPES.activity);
   const destination = `${currentType} ${TYPES.transfer.some((type) => currentType === type) ? `to` : `in`}`;
-  const offers = offersByType.length ? createOffersWrapTemplate(offersByType, currentOffers) : ``;
+  const destinationsList = createDestinationsTemplate(CITIES);
   const start = moment.utc(new Date(startTime)).format(`DD/MM/YY HH:mm`);
   const end = moment.utc(new Date(endTime)).format(`DD/MM/YY HH:mm`);
+  const favoriteButtonCheck = isFavorite ? `checked` : ``;
+  const details = offersByType.length || info.description.length || info.photos.length ? createDetailsTemplate(currentOffers, offersByType, info) : ``;
 
   return (
     `<li class="trip-events__item">
@@ -91,11 +149,9 @@ const createFormTemplate = (waypoint) => {
             <label class="event__label  event__type-output" for="event-destination-1">
               ${destination}
             </label>
-            <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${city}" list="destination-list-1">
+            <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${currentCity}" list="destination-list-1">
             <datalist id="destination-list-1">
-              <option value="Amsterdam"></option>
-              <option value="Geneva"></option>
-              <option value="Chamonix"></option>
+              ${destinationsList}
             </datalist>
           </div>
 
@@ -122,7 +178,7 @@ const createFormTemplate = (waypoint) => {
           <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
           <button class="event__reset-btn" type="reset">Delete</button>
 
-          <input id="event-favorite-1" class="event__favorite-checkbox  visually-hidden" type="checkbox" name="event-favorite" checked>
+          <input id="event-favorite-1" class="event__favorite-checkbox  visually-hidden" type="checkbox" name="event-favorite" ${favoriteButtonCheck}>
           <label class="event__favorite-btn" for="event-favorite-1">
             <span class="visually-hidden">Add to favorite</span>
             <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
@@ -134,23 +190,83 @@ const createFormTemplate = (waypoint) => {
             <span class="visually-hidden">Open event</span>
           </button>
         </header>
-        ${offers}
+        ${details}
       </form>
     </li>`
   );
 };
 
-export default class Form extends AbstractComponent {
+export default class Form extends AbstractSmartComponent {
   constructor(waypoint) {
     super();
     this._waypoint = waypoint;
+    this._submitHandler = null;
+    this._currentType = waypoint.currentType;
+    this._currentCity = waypoint.currentCity;
+    this._offersByType = waypoint.offersByType;
+    this._info = waypoint.info;
+
+    this._subscribeOnEvents();
   }
 
   getTemplate() {
-    return createFormTemplate(this._waypoint);
+    return createFormTemplate(this._waypoint, {
+      currentType: this._currentType,
+      currentCity: this._currentCity,
+      offersByType: this._offersByType,
+      info: this._info,
+    });
+  }
+
+  recoveryListeners() {
+    this.setSubmitHandler(this._submitHandler);
+    this._subscribeOnEvents();
+  }
+
+  rerender() {
+    super.rerender();
+  }
+
+  reset() {
+    const waypoint = this._waypoint;
+
+    this._currentType = waypoint.currentType;
+    this._currentCity = waypoint.currentCity;
+    this._offersByType = waypoint.offersByType;
+    this._info = waypoint.info;
+
+    this.rerender();
   }
 
   setSubmitHandler(handler) {
     this.getElement().querySelector(`form`).addEventListener(`submit`, handler);
+
+    this._submitHandler = handler;
+  }
+
+  setFavoriteButtonClickHandler(handler) {
+    this.getElement().querySelector(`.event__favorite-checkbox`).addEventListener(`change`, handler);
+  }
+
+  _subscribeOnEvents() {
+    const element = this.getElement();
+
+    const eventTypeList = element.querySelectorAll(`.event__type-input`);
+    eventTypeList.forEach((item) => {
+      item.addEventListener(`change`, (event) => {
+        this._currentType = getCapitalizedString(event.target.value);
+        this._offersByType = OFFERS.filter((offer) => offer.type === this._currentType);
+
+        this.rerender();
+      });
+    });
+
+    const eventInputDestination = element.querySelector(`.event__input--destination`);
+    eventInputDestination.addEventListener(`change`, (event) => {
+      this._currentCity = event.target.value;
+      this._info = CITIES_INFO.find((city) => city.name === this._currentCity);
+
+      this.rerender();
+    });
   }
 }

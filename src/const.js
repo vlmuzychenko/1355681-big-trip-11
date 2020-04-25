@@ -1,16 +1,11 @@
+import {getRandomTextFromString, getRandomPhotos, getRandomIntegerNumber} from "./utils/common.js";
+
 export const EXAMPLE_CITY_DESCR = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras aliquet varius magna, non porta ligula feugiat eget. Fusce tristique felis at fermentum pharetra. Aliquam id orci ut lectus varius viverra. Nullam nunc ex, convallis sed finibus eget, sollicitudin eget ante. Phasellus eros mauris, condimentum sed nibh vitae, sodales efficitur ipsum. Sed blandit, eros vel aliquam faucibus, purus ex euismod diam, eu luctus nunc ante ut dui. Sed sed nisi sed augue convallis suscipit in sed felis. Aliquam erat volutpat. Nunc fermentum tortor ac porta dapibus. In rutrum ac purus sit amet tempus.`;
 
 export const TYPES = {
   transfer: [`Taxi`, `Bus`, `Train`, `Ship`, `Transport`, `Drive`, `Flight`],
   activity: [`Check-in`, `Sightseeing`, `Restaurant`]
 };
-
-export const CITIES = [
-  `Berlin`,
-  `Amsterdam`,
-  `Paris`,
-  `Geneva`
-];
 
 export const OFFERS = [
   {
@@ -63,5 +58,32 @@ export const OFFERS = [
     name: `Order Uber`,
     shortName: `uber`,
     price: `20`
+  }
+];
+
+export const CITIES = [
+  `Berlin`,
+  `Amsterdam`,
+  `Paris`,
+  `Geneva`
+];
+
+export const CITIES_INFO = [
+  {
+    name: `Berlin`,
+    description: getRandomTextFromString(EXAMPLE_CITY_DESCR),
+    photos: getRandomPhotos(getRandomIntegerNumber(0, 5))
+  }, {
+    name: `Amsterdam`,
+    description: getRandomTextFromString(EXAMPLE_CITY_DESCR),
+    photos: getRandomPhotos(getRandomIntegerNumber(0, 5))
+  }, {
+    name: `Paris`,
+    description: getRandomTextFromString(EXAMPLE_CITY_DESCR),
+    photos: getRandomPhotos(getRandomIntegerNumber(0, 5))
+  }, {
+    name: `Geneva`,
+    description: getRandomTextFromString(EXAMPLE_CITY_DESCR),
+    photos: getRandomPhotos(getRandomIntegerNumber(0, 5))
   }
 ];

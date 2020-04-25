@@ -31,9 +31,9 @@ const getDateDifference = (startDate, endDate) => {
 };
 
 const createWaypointTemplate = (waypoint) => {
-  const {currentType, city, currentOffers, startTime, endTime, price} = waypoint;
+  const {currentType, currentCity, currentOffers, startTime, endTime, price} = waypoint;
   const eventOffers = currentOffers.length ? createOffersTemplate(currentOffers) : ``;
-  const eventTitle = `${currentType} ${TYPES.transfer.some((type) => currentType === type) ? `to` : `in`} ${city}`;
+  const eventTitle = `${currentType} ${TYPES.transfer.some((type) => currentType === type) ? `to` : `in`} ${currentCity}`;
   const diffTime = getDateDifference(startTime, endTime);
 
   return (
