@@ -223,10 +223,6 @@ export default class Form extends AbstractSmartComponent {
     this._subscribeOnEvents();
   }
 
-  rerender() {
-    super.rerender();
-  }
-
   reset() {
     const waypoint = this._waypoint;
 

@@ -65,6 +65,7 @@ export default class PointController {
   }
 
   _replaceEditToWaypoint() {
+    document.removeEventListener(`keydown`, this._onEscKeyDown);
     this._editComponent.reset();
     replace(this._waypointComponent, this._editComponent);
     this._mode = Mode.DEFAULT;
