@@ -1,47 +1,27 @@
 import moment from "moment";
 import {getRandomArrayItem, getRandomIntegerNumber} from "../utils/common.js";
-import {EXAMPLE_CITY_DESCR, TYPES, CITIES, OFFERS} from "../const.js";
-
-const getOffersByType = (type, offers) => {
-  return offers.filter((item) => item.type === type);
-};
+import {CITIES_INFO, TYPES, CITIES, OFFERS} from "../const.js";
 
 const getShuffledArray = (array) => {
   return array.sort(() => 0.5 - Math.random());
 };
 
-const getRandomTextFromString = (str) => {
-  const stringsSet = str.match(/[^\.!\?]+[\.!\?]+/g);
-  const stringsCount = getRandomIntegerNumber(0, 5);
-  const shuffledStringsSet = getShuffledArray(stringsSet);
-  const result = shuffledStringsSet.slice(0, stringsCount).join(``);
-
-  return result;
-};
-
-const getRandomPhotos = (count) => {
-  const photos = [];
-  for (let i = 0; i < count; i++) {
-    photos.push(`http://picsum.photos/248/152?r=${Math.random()}`);
-  }
-
-  return photos;
-};
-
 const generateWaypoint = () => {
   const currentType = getRandomArrayItem([...TYPES.transfer, ...TYPES.activity]);
-  const city = getRandomArrayItem(CITIES);
-  const offersByType = getOffersByType(currentType, OFFERS);
+  const currentCity = getRandomArrayItem(CITIES);
+  const offersByType = OFFERS.filter((item) => item.type === currentType);
   const currentOffers = getShuffledArray(offersByType).slice(0, getRandomIntegerNumber(0, offersByType.length));
-  const description = getRandomTextFromString(EXAMPLE_CITY_DESCR);
-  const photos = getRandomPhotos(getRandomIntegerNumber(0, 5));
+  const currentCityInfo = CITIES_INFO.filter((city) => city.name === currentCity);
+  const description = currentCityInfo[0].description;
+  const photos = currentCityInfo[0].photos;
   const price = getRandomIntegerNumber(50, 1000);
   const startTime = moment.utc(new Date(+(new Date()) - Math.floor(Math.random() * 10000000000))).format();
   const endTime = moment.utc(startTime).add(getRandomIntegerNumber(1, 24), `h`).add(getRandomIntegerNumber(1, 60), `m`).format();
+  const isFavorite = Math.random() > 0.5;
 
   return {
     currentType,
-    city,
+    currentCity,
     offersByType,
     currentOffers,
     info: {
@@ -50,7 +30,8 @@ const generateWaypoint = () => {
     },
     startTime,
     endTime,
-    price
+    price,
+    isFavorite
   };
 };
 
