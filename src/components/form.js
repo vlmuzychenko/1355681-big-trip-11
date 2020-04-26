@@ -2,6 +2,9 @@ import moment from "moment";
 import {TYPES, CITIES, CITIES_INFO, OFFERS} from "../const.js";
 import {getCapitalizedString} from "../utils/common.js";
 import AbstractSmartComponent from "./abstract-smart-component.js";
+import flatpickr from "flatpickr";
+
+import "flatpickr/dist/flatpickr.min.css";
 
 const createTypesTemplate = (currentType, types) => {
   return types
@@ -205,7 +208,10 @@ export default class Form extends AbstractSmartComponent {
     this._currentCity = waypoint.currentCity;
     this._offersByType = waypoint.offersByType;
     this._info = waypoint.info;
+    this._flatpickrStartTime = null;
+    this._flatpickrEndTime = null;
 
+    this._applyFlatpickr();
     this._subscribeOnEvents();
   }
 
@@ -221,6 +227,12 @@ export default class Form extends AbstractSmartComponent {
   recoveryListeners() {
     this.setSubmitHandler(this._submitHandler);
     this._subscribeOnEvents();
+  }
+
+  rerender() {
+    super.rerender();
+
+    this._applyFlatpickr();
   }
 
   reset() {
@@ -242,6 +254,39 @@ export default class Form extends AbstractSmartComponent {
 
   setFavoriteButtonClickHandler(handler) {
     this.getElement().querySelector(`.event__favorite-checkbox`).addEventListener(`change`, handler);
+  }
+
+  _applyFlatpickr() {
+    if (this._flatpickrStartTime) {
+      this._flatpickr.destroy();
+      this._flatpickr = null;
+    }
+
+    if (this._flatpickrEndTime) {
+      this._flatpickr.destroy();
+      this._flatpickr = null;
+    }
+
+    const startTimeElement = this.getElement().querySelectorAll(`#event-start-time-1`);
+    const endTimeElement = this.getElement().querySelectorAll(`#event-end-time-1`);
+
+    this._flatpickr = flatpickr(startTimeElement, {
+      altInput: true,
+      altFormat: `d/m/y H:i`,
+      enableTime: true,
+      allowInput: true,
+      defaultDate: this._waypoint.startTime,
+      dateFormat: `d/m/y H:i`,
+    });
+
+    this._flatpickr = flatpickr(endTimeElement, {
+      altInput: true,
+      altFormat: `d/m/y H:i`,
+      enableTime: true,
+      allowInput: true,
+      defaultDate: this._waypoint.endTime,
+      dateFormat: `d/m/y H:i`,
+    });
   }
 
   _subscribeOnEvents() {
