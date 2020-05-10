@@ -1,9 +1,10 @@
 import moment from "moment";
-import SortComponent, {SortType} from "../components/sort.js";
+import SortComponent from "../components/sort.js";
 import DayComponent from "../components/day.js";
 import NoWaypointsComponent from "../components/no-waypoints.js";
-import WaypointController from "./point.js";
-import {render, replace, RenderPosition} from "../utils/render.js";
+import WaypointController, {EmptyWaypoint} from "./point.js";
+import {SortType, Mode as WaypointControllerMode} from "../const.js";
+import {render, RenderPosition, remove} from "../utils/render.js";
 
 const getSortedWaypoints = (waypoints, sortType) => {
   let sortedWaypoints = [];
@@ -47,11 +48,12 @@ const renderWaypointsByDay = (container, waypoints, onDataChange, onViewChange) 
 
 const renderDay = (daysListElement, index, waypoints, onDataChange, onViewChange) => {
   const dayComponent = new DayComponent(index, waypoints);
-  const waypointListElement = dayComponent.getElement().querySelector(`.trip-events__list`);
 
   const waypointControllers = waypoints.map((waypoint) => {
-    const waypointController = new WaypointController(waypointListElement, onDataChange, onViewChange);
-    waypointController.render(waypoint);
+    const waypointWrapper = dayComponent.createWaypointWrapperElement();
+
+    const waypointController = new WaypointController(waypointWrapper, onDataChange, onViewChange);
+    waypointController.render(waypoint, WaypointControllerMode.DEFAULT);
 
     return waypointController;
   });
@@ -62,67 +64,134 @@ const renderDay = (daysListElement, index, waypoints, onDataChange, onViewChange
 };
 
 export default class TripController {
-  constructor(container) {
+  constructor(container, waypointsModel, addEventComponent) {
     this._waypoints = [];
-    this._waypointControllers = [];
+    this._waypointsControllers = [];
 
     this._container = container;
+    this._waypointsModel = waypointsModel;
+    this._addEventComponent = addEventComponent;
 
-    this._noWaypointsComponent = new NoWaypointsComponent();
     this._sortComponent = new SortComponent();
+    this._creatingWaypoint = null;
+    this._noWaypointsComponent = null;
 
     this._onViewChange = this._onViewChange.bind(this);
-    this._onSortTypeChange = this._onSortTypeChange.bind(this);
     this._onDataChange = this._onDataChange.bind(this);
+    this._onSortTypeChange = this._onSortTypeChange.bind(this);
+    this._onFilterChange = this._onFilterChange.bind(this);
 
     this._sortComponent.setSortTypeChangeHandler(this._onSortTypeChange);
+    this._waypointsModel.setFilterChangeHandler(this._onFilterChange);
   }
 
-  render(waypoints) {
-    this._waypoints = waypoints;
-    const containerComponent = this._container;
-    const noWaypointsComponent = this._noWaypointsComponent;
+  render() {
     const containerElement = this._container.getElement();
+    const waypoints = this._waypointsModel.getWaypoints();
 
-    if (this._waypoints.length === 0) {
-      replace(noWaypointsComponent, containerComponent);
+    if (waypoints.length === 0) {
+      this._noWaypointsComponent = new NoWaypointsComponent();
+      render(containerElement.parentElement, this._noWaypointsComponent, RenderPosition.BEFOREEND);
       return;
     }
 
     render(containerElement, this._sortComponent, RenderPosition.BEFOREBEGIN);
 
-    const newWaypoints = renderWaypointsByDay(containerElement, this._waypoints, this._onDataChange, this._onViewChange);
-    this._waypointControllers = this._waypointControllers.concat(newWaypoints);
+    this._renderWaypointsByDay(waypoints);
+  }
+
+  createWaypoint() {
+    if (this._noWaypointsComponent) {
+      remove(this._noWaypointsComponent);
+    }
+
+    const containerElement = this._container.getElement();
+
+    this._creatingWaypoint = new WaypointController(containerElement, this._onDataChange, this._onViewChange);
+    this._creatingWaypoint.render(EmptyWaypoint, WaypointControllerMode.ADDING);
+
+    this._waypointsControllers = this._waypointsControllers.concat(this._creatingWaypoint);
+  }
+
+  _removeWaypoints() {
+    this._container.getElement().innerHTML = ``;
+    this._waypointsControllers.forEach((waypointController) => waypointController.destroy());
+    this._waypointsControllers = [];
+  }
+
+  _renderWaypointsByDay(waypoints) {
+    const containerElement = this._container.getElement();
+
+    const newWaypoints = renderWaypointsByDay(containerElement, waypoints, this._onDataChange, this._onViewChange);
+    this._waypointsControllers = this._waypointsControllers.concat(newWaypoints);
+  }
+
+  _updateWaypoints() {
+    this._removeWaypoints();
+    this._renderWaypointsByDay(this._waypointsModel.getWaypoints());
   }
 
   _onViewChange() {
-    this._waypointControllers.forEach((it) => it.setDefaultView());
+    if (this._creatingWaypoint) {
+      this._creatingWaypoint = null;
+      this._addEventComponent.enable();
+    }
+
+    this._waypointsControllers.forEach((it) => it.setDefaultView());
   }
 
   _onSortTypeChange(sortType) {
-    const sortedWaypoints = getSortedWaypoints(this._waypoints, sortType);
+    const sortedWaypoints = getSortedWaypoints(this._waypointsModel.getWaypoints(), sortType);
+
     const containerElement = this._container.getElement();
     let newWaypoints = [];
-    containerElement.innerHTML = ``;
+    this._removeWaypoints();
 
     if (sortType === SortType.DEFAULT) {
-      newWaypoints = renderWaypointsByDay(containerElement, sortedWaypoints, this._onDataChange, this._onViewChange);
+      this._renderWaypointsByDay(sortedWaypoints);
     } else {
-      newWaypoints = renderDay(containerElement, 0, sortedWaypoints, this._onDataChange, this._onViewChange);
+      newWaypoints = renderDay(containerElement, false, sortedWaypoints, this._onDataChange, this._onViewChange);
     }
 
-    this._waypointControllers = this._waypointControllers.concat(newWaypoints);
+    this._waypointsControllers = this._waypointsControllers.concat(newWaypoints);
+    this._addEventComponent.enable();
   }
 
   _onDataChange(waypointController, oldData, newData) {
-    const index = this._waypoints.findIndex((it) => it === oldData);
+    if (oldData === EmptyWaypoint) {
+      this._creatingWaypoint = null;
+      waypointController.destroy();
+      this._addEventComponent.enable();
+      if (newData === null) {
+        this._updateWaypoints();
+      } else {
+        if (!this._waypointsModel.getWaypoints().length) {
+          render(this._container.getElement(), this._sortComponent, RenderPosition.BEFOREBEGIN);
+        }
 
-    if (index === -1) {
-      return;
+        this._waypointsModel.addWaypoint(newData);
+        this._updateWaypoints();
+      }
+    } else if (newData === null) {
+      this._waypointsModel.removeWaypoint(oldData.id);
+      this._updateWaypoints();
+
+      if (!this._waypointsModel.getWaypoints().length) {
+        remove(this._sortComponent);
+        render(this._container.getElement().parentElement, this._noWaypointsComponent, RenderPosition.BEFOREEND);
+      }
+    } else {
+      const isSuccess = this._waypointsModel.updateWaypoint(oldData.id, newData);
+
+      if (isSuccess) {
+        waypointController.render(newData, WaypointControllerMode.DEFAULT);
+      }
     }
+  }
 
-    this._waypoints = [...this._waypoints.slice(0, index), newData, ...this._waypoints.slice(index + 1)];
-
-    waypointController.render(this._waypoints[index]);
+  _onFilterChange() {
+    this._sortComponent.setDefaultSortType();
+    this._updateWaypoints();
+    this._addEventComponent.enable();
   }
 }

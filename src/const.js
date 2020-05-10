@@ -87,3 +87,21 @@ export const CITIES_INFO = [
     photos: getRandomPhotos(getRandomIntegerNumber(0, 5))
   }
 ];
+
+export const FilterType = {
+  EVERYTHING: `everything`,
+  FUTURE: `future`,
+  PAST: `past`
+};
+
+export const SortType = {
+  DEFAULT: `event`,
+  DURATION_DOWN: `time`,
+  PRICE_DOWN: `price`,
+};
+
+export const Mode = {
+  DEFAULT: `default`,
+  ADDING: `adding`,
+  EDIT: `edit`,
+};

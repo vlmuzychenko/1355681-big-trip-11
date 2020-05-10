@@ -1,5 +1,5 @@
 import moment from "moment";
-import {TYPES, CITIES, CITIES_INFO, OFFERS} from "../const.js";
+import {TYPES, CITIES, CITIES_INFO, OFFERS, Mode} from "../const.js";
 import {getCapitalizedString} from "../utils/common.js";
 import AbstractSmartComponent from "./abstract-smart-component.js";
 import flatpickr from "flatpickr";
@@ -55,6 +55,10 @@ const createOffersTemplate = (offersByType, currentOffers) => {
 };
 
 const createOffersWrapTemplate = (offersByType, currentOffers) => {
+  if (!offersByType.length) {
+    return ``;
+  }
+
   return (
     `<section class="event__section  event__section--offers">
       <h3 class="event__section-title  event__section-title--offers">Offers</h3>
@@ -66,12 +70,20 @@ const createOffersWrapTemplate = (offersByType, currentOffers) => {
 };
 
 const createDescriptionTemplate = (description) => {
+  if (!description.length) {
+    return ``;
+  }
+
   return (
     `<p class="event__destination-description">${description}</p>`
   );
 };
 
 const createPhotosTemplate = (photos) => {
+  if (!photos.length) {
+    return ``;
+  }
+
   return photos
     .map((photo) => {
       return (
@@ -83,17 +95,18 @@ const createPhotosTemplate = (photos) => {
 
 
 const createDestinationInfoTemplate = (info) => {
-  const description = info.description.length ? createDescriptionTemplate(info.description) : ``;
-  const photos = info.photos.length ? createPhotosTemplate(info.photos) : ``;
+  if (!info && !info.description && !info.photos) {
+    return ``;
+  }
 
   return (
     `<section class="event__section  event__section--destination">
       <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-      ${description}
+      ${createDescriptionTemplate(info.description)}
 
       <div class="event__photos-container">
         <div class="event__photos-tape">
-          ${photos}
+          ${createPhotosTemplate(info.photos)}
         </div>
       </div>
     </section>`
@@ -101,20 +114,38 @@ const createDestinationInfoTemplate = (info) => {
 };
 
 const createDetailsTemplate = (currentOffers, offersByType, info) => {
-  const offers = offersByType.length ? createOffersWrapTemplate(offersByType, currentOffers) : ``;
-  const destinationInfo = info.description.length || info.photos.length ? createDestinationInfoTemplate(info) : ``;
+  if (!offersByType.length && !info.description && !info.photos) {
+    return ``;
+  }
 
   return (
     `<section class="event__details">
-      ${offers}
-      ${destinationInfo}
+      ${createOffersWrapTemplate(offersByType, currentOffers)}
+
+      ${createDestinationInfoTemplate(info)}
     </section>`
   );
 };
 
+const createControlElementsTemplate = (favoriteButtonCheck) => {
+  return (
+    `<input id="event-favorite-1" class="event__favorite-checkbox  visually-hidden" type="checkbox" name="event-favorite" ${favoriteButtonCheck}>
+      <label class="event__favorite-btn" for="event-favorite-1">
+        <span class="visually-hidden">Add to favorite</span>
+        <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
+          <path d="M14 21l-8.22899 4.3262 1.57159-9.1631L.685209 9.67376 9.8855 8.33688 14 0l4.1145 8.33688 9.2003 1.33688-6.6574 6.48934 1.5716 9.1631L14 21z"/>
+        </svg>
+      </label>
+
+      <button class="event__rollup-btn" type="button">
+        <span class="visually-hidden">Open event</span>
+      </button>`
+  );
+};
+
 const createFormTemplate = (waypoint, options = {}) => {
-  const {currentOffers, startTime, endTime, price, isFavorite} = waypoint;
-  const {currentType, currentCity, offersByType, info} = options;
+  const {currentOffers, startTime, endTime, isFavorite} = waypoint;
+  const {currentType, currentCity, offersByType, info = {}, price, mode} = options;
   const transferTypes = createTypesTemplate(currentType, TYPES.transfer);
   const activityTypes = createTypesTemplate(currentType, TYPES.activity);
   const destination = `${currentType} ${TYPES.transfer.some((type) => currentType === type) ? `to` : `in`}`;
@@ -122,92 +153,121 @@ const createFormTemplate = (waypoint, options = {}) => {
   const start = moment.utc(new Date(startTime)).format(`DD/MM/YY HH:mm`);
   const end = moment.utc(new Date(endTime)).format(`DD/MM/YY HH:mm`);
   const favoriteButtonCheck = isFavorite ? `checked` : ``;
-  const details = offersByType.length || info.description.length || info.photos.length ? createDetailsTemplate(currentOffers, offersByType, info) : ``;
+  const details = createDetailsTemplate(currentOffers, offersByType, info);
+  const isSaveButtonDisabled = CITIES.includes(currentCity) && !isNaN(price) && price > 0 ? `` : `disabled`;
+  const addingMode = mode === Mode.ADDING;
+  const formClassName = addingMode ? `trip-events__item` : ``;
+  const cancelButtonText = addingMode ? `Cancel` : `Delete`;
+  const controlElements = addingMode ? `` : createControlElementsTemplate(favoriteButtonCheck);
 
   return (
-    `<li class="trip-events__item">
-      <form class="event  event--edit" action="#" method="post">
-        <header class="event__header">
-          <div class="event__type-wrapper">
-            <label class="event__type  event__type-btn" for="event-type-toggle-1">
-              <span class="visually-hidden">Choose event type</span>
-              <img class="event__type-icon" width="17" height="17" src="img/icons/${currentType.toLowerCase()}.png" alt="Event type icon">
-            </label>
-            <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
-
-            <div class="event__type-list">
-              <fieldset class="event__type-group">
-                <legend class="visually-hidden">Transfer</legend>
-                ${transferTypes}
-              </fieldset>
-
-              <fieldset class="event__type-group">
-                <legend class="visually-hidden">Activity</legend>
-                ${activityTypes}
-              </fieldset>
-            </div>
-          </div>
-
-          <div class="event__field-group  event__field-group--destination">
-            <label class="event__label  event__type-output" for="event-destination-1">
-              ${destination}
-            </label>
-            <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${currentCity}" list="destination-list-1">
-            <datalist id="destination-list-1">
-              ${destinationsList}
-            </datalist>
-          </div>
-
-          <div class="event__field-group  event__field-group--time">
-            <label class="visually-hidden" for="event-start-time-1">
-              From
-            </label>
-            <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${start}">
-            &mdash;
-            <label class="visually-hidden" for="event-end-time-1">
-              To
-            </label>
-            <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${end}">
-          </div>
-
-          <div class="event__field-group  event__field-group--price">
-            <label class="event__label" for="event-price-1">
-              <span class="visually-hidden">Price</span>
-              &euro;
-            </label>
-            <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${price}">
-          </div>
-
-          <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-          <button class="event__reset-btn" type="reset">Delete</button>
-
-          <input id="event-favorite-1" class="event__favorite-checkbox  visually-hidden" type="checkbox" name="event-favorite" ${favoriteButtonCheck}>
-          <label class="event__favorite-btn" for="event-favorite-1">
-            <span class="visually-hidden">Add to favorite</span>
-            <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
-              <path d="M14 21l-8.22899 4.3262 1.57159-9.1631L.685209 9.67376 9.8855 8.33688 14 0l4.1145 8.33688 9.2003 1.33688-6.6574 6.48934 1.5716 9.1631L14 21z"/>
-            </svg>
+    `<form class="${formClassName} event  event--edit" action="#" method="post">
+      <header class="event__header">
+        <div class="event__type-wrapper">
+          <label class="event__type  event__type-btn" for="event-type-toggle-1">
+            <span class="visually-hidden">Choose event type</span>
+            <img class="event__type-icon" width="17" height="17" src="img/icons/${currentType.toLowerCase()}.png" alt="Event type icon">
           </label>
+          <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
 
-          <button class="event__rollup-btn" type="button">
-            <span class="visually-hidden">Open event</span>
-          </button>
-        </header>
-        ${details}
-      </form>
-    </li>`
+          <div class="event__type-list">
+            <fieldset class="event__type-group">
+              <legend class="visually-hidden">Transfer</legend>
+              ${transferTypes}
+            </fieldset>
+
+            <fieldset class="event__type-group">
+              <legend class="visually-hidden">Activity</legend>
+              ${activityTypes}
+            </fieldset>
+          </div>
+        </div>
+
+        <div class="event__field-group  event__field-group--destination">
+          <label class="event__label  event__type-output" for="event-destination-1">
+            ${destination}
+          </label>
+          <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${currentCity}" list="destination-list-1">
+          <datalist id="destination-list-1">
+            ${destinationsList}
+          </datalist>
+        </div>
+
+        <div class="event__field-group  event__field-group--time">
+          <label class="visually-hidden" for="event-start-time-1">
+            From
+          </label>
+          <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${start}">
+          &mdash;
+          <label class="visually-hidden" for="event-end-time-1">
+            To
+          </label>
+          <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${end}">
+        </div>
+
+        <div class="event__field-group  event__field-group--price">
+          <label class="event__label" for="event-price-1">
+            <span class="visually-hidden">Price</span>
+            &euro;
+          </label>
+          <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${price}">
+        </div>
+
+        <button class="event__save-btn  btn  btn--blue" type="submit" ${isSaveButtonDisabled}>Save</button>
+        <button class="event__reset-btn" type="reset">${cancelButtonText}</button>
+
+        ${controlElements}
+        
+      </header>
+      ${details}
+    </form>`
   );
 };
 
+const parseFormData = (formData) => {
+  const currentType = getCapitalizedString(formData.get(`event-type`));
+  const offersByType = OFFERS.filter((item) => item.type === currentType);
+  const currentOffers = [];
+  offersByType.forEach((offer) => {
+    if (formData.has(`event-offer-${offer.shortName}`)) {
+      currentOffers.push(offer);
+    }
+  });
+
+  const currentCity = formData.get(`event-destination`);
+  const currentCityInfo = CITIES_INFO.filter((city) => city.name === currentCity);
+  const description = currentCityInfo[0].description;
+  const photos = currentCityInfo[0].photos;
+  const isFavorite = !!formData.get(`event-favorite`);
+
+  return {
+    currentType,
+    currentCity,
+    offersByType,
+    currentOffers,
+    info: {
+      description,
+      photos
+    },
+    startTime: formData.get(`event-start-time`),
+    endTime: formData.get(`event-end-time`),
+    price: formData.get(`event-price`),
+    isFavorite
+  };
+};
+
 export default class Form extends AbstractSmartComponent {
-  constructor(waypoint) {
+  constructor(waypoint, mode) {
     super();
     this._waypoint = waypoint;
+    this._mode = mode;
     this._submitHandler = null;
+    this._deleteHandler = null;
     this._currentType = waypoint.currentType;
     this._currentCity = waypoint.currentCity;
     this._offersByType = waypoint.offersByType;
     this._info = waypoint.info;
+    this._price = waypoint.price;
     this._flatpickrStartTime = null;
     this._flatpickrEndTime = null;
 
@@ -221,11 +281,28 @@ export default class Form extends AbstractSmartComponent {
       currentCity: this._currentCity,
       offersByType: this._offersByType,
       info: this._info,
+      price: this._price,
+      mode: this._mode,
     });
+  }
+
+  removeElement() {
+    if (this._flatpickrStartTime) {
+      this._flatpickr.destroy();
+      this._flatpickr = null;
+    }
+
+    if (this._flatpickrEndTime) {
+      this._flatpickr.destroy();
+      this._flatpickr = null;
+    }
+
+    super.removeElement();
   }
 
   recoveryListeners() {
     this.setSubmitHandler(this._submitHandler);
+    this.setCancelButtonClickHandler(this._deleteHandler);
     this._subscribeOnEvents();
   }
 
@@ -246,14 +323,23 @@ export default class Form extends AbstractSmartComponent {
     this.rerender();
   }
 
+  getData() {
+    const form = this.getElement();
+    const formData = new FormData(form);
+
+    return parseFormData(formData);
+  }
+
   setSubmitHandler(handler) {
-    this.getElement().querySelector(`form`).addEventListener(`submit`, handler);
+    this.getElement().addEventListener(`submit`, handler);
 
     this._submitHandler = handler;
   }
 
-  setFavoriteButtonClickHandler(handler) {
-    this.getElement().querySelector(`.event__favorite-checkbox`).addEventListener(`change`, handler);
+  setCancelButtonClickHandler(handler) {
+    this.getElement().querySelector(`.event__reset-btn`).addEventListener(`click`, handler);
+
+    this._deleteHandler = handler;
   }
 
   _applyFlatpickr() {
@@ -304,8 +390,24 @@ export default class Form extends AbstractSmartComponent {
 
     const eventInputDestination = element.querySelector(`.event__input--destination`);
     eventInputDestination.addEventListener(`change`, (event) => {
+      if (this._currentCity === event.target.value) {
+        return;
+      }
+
       this._currentCity = event.target.value;
-      this._info = CITIES_INFO.find((city) => city.name === this._currentCity);
+
+      this._info = this._currentCity ? CITIES_INFO.find((city) => city.name === this._currentCity) : {};
+
+      this.rerender();
+    });
+
+    const eventInputPrice = element.querySelector(`.event__input--price`);
+    eventInputPrice.addEventListener(`change`, (event) => {
+      if (this._price === event.target.value) {
+        return;
+      }
+
+      this._price = event.target.value;
 
       this.rerender();
     });
