@@ -14,12 +14,11 @@ const generateWaypoint = () => {
   const currentCityInfo = CITIES_INFO.filter((city) => city.name === currentCity);
   const description = currentCityInfo[0].description;
   const photos = currentCityInfo[0].photos;
-  const price = getRandomIntegerNumber(50, 1000);
   const startTime = moment.utc(new Date(+(new Date()) - Math.floor(Math.random() * 10000000000))).format();
   const endTime = moment.utc(startTime).add(getRandomIntegerNumber(1, 24), `h`).add(getRandomIntegerNumber(1, 60), `m`).format();
-  const isFavorite = Math.random() > 0.5;
 
   return {
+    id: String(new Date() + Math.random()),
     currentType,
     currentCity,
     offersByType,
@@ -30,8 +29,8 @@ const generateWaypoint = () => {
     },
     startTime,
     endTime,
-    price,
-    isFavorite
+    price: getRandomIntegerNumber(50, 1000),
+    isFavorite: Math.random() > 0.5
   };
 };
 

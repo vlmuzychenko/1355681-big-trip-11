@@ -29,3 +29,7 @@ export const getRandomPhotos = (count) => {
 
   return photos;
 };
+
+export const getSringWithoutPrefix = (string, prefix) => {
+  return string.substring(prefix.length);
+};
