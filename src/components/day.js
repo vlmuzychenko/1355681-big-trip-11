@@ -9,11 +9,11 @@ const createWaypointWrapperTemplate = () => {
 };
 
 const createDayInfoTemplate = (index, waypointsByDay) => {
-  if (index === false) {
+  if (index === null) {
     return ``;
   } else {
-    const date = moment.utc(new Date(waypointsByDay[0].startTime)).format(`YYYY-MM-DD`);
-    const visibleDate = moment.utc(new Date(waypointsByDay[0].startTime)).format(`D MMM`);
+    const date = moment(waypointsByDay[0].startTime).format(`YYYY-MM-DD`);
+    const visibleDate = moment(waypointsByDay[0].startTime).format(`D MMM`);
 
     return (
       `<span class="day__counter">${index + 1}</span>

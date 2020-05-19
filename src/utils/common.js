@@ -33,3 +33,13 @@ export const getRandomPhotos = (count) => {
 export const getSringWithoutPrefix = (string, prefix) => {
   return string.substring(prefix.length);
 };
+
+export const getOffersByType = (allOffers, type) => {
+  const offersByType = allOffers.filter((item) => item.type === type.toLowerCase());
+
+  if (!offersByType) {
+    return [];
+  }
+
+  return offersByType[0].offers;
+};

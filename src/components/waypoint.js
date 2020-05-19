@@ -22,7 +22,7 @@ const castomizeTimeFormat = (time, value) => {
 };
 
 const getDateDifference = (startDate, endDate) => {
-  const diff = moment.utc(new Date(endDate)).diff(startDate);
+  const diff = moment(endDate).diff(startDate);
   const duration = moment.duration(diff);
   let days = duration.days() ? castomizeTimeFormat(duration.days(), `D`) : ``;
   let hours = duration.hours() ? castomizeTimeFormat(duration.hours(), `H`) : ``;
@@ -46,9 +46,9 @@ const createWaypointTemplate = (waypoint) => {
 
       <div class="event__schedule">
         <p class="event__time">
-          <time class="event__start-time" datetime="${startTime}">${moment.utc(new Date(startTime)).format(`HH:mm`)}</time>
+          <time class="event__start-time" datetime="${startTime}">${moment(startTime).format(`HH:mm`)}</time>
           &mdash;
-          <time class="event__end-time" datetime="${endTime}">${moment.utc(new Date(endTime)).format(`HH:mm`)}</time>
+          <time class="event__end-time" datetime="${endTime}">${moment(endTime).format(`HH:mm`)}</time>
         </p>
         <p class="event__duration">${diffTime}</p>
       </div>

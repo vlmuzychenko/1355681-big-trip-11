@@ -1,8 +1,8 @@
 import moment from "moment";
-import {TYPES, CITIES, CITIES_INFO, OFFERS, Mode} from "../const.js";
-import {getCapitalizedString} from "../utils/common.js";
-import AbstractSmartComponent from "./abstract-smart-component.js";
 import flatpickr from "flatpickr";
+import {TYPES, OFFERS, Mode} from "../const.js";
+import {getCapitalizedString, getOffersByType} from "../utils/common.js";
+import AbstractSmartComponent from "./abstract-smart-component.js";
 
 import "flatpickr/dist/flatpickr.min.css";
 
@@ -23,7 +23,7 @@ const createDestinationsTemplate = (cities) => {
   return cities
     .map((city) => {
       return (
-        `<option value="${city}"></option>`
+        `<option value="${city.name}"></option>`
       );
     })
     .join(`\n`);
@@ -79,15 +79,25 @@ const createDescriptionTemplate = (description) => {
   );
 };
 
-const createPhotosTemplate = (photos) => {
+const createPhotosWrapTemplate = (photos) => {
   if (!photos.length) {
     return ``;
   }
 
+  return (
+    `<div class="event__photos-container">
+      <div class="event__photos-tape">
+        ${createPhotosTemplate(photos)}
+      </div>
+    </div>`
+  );
+};
+
+const createPhotosTemplate = (photos) => {
   return photos
     .map((photo) => {
       return (
-        `<img class="event__photo" src="${photo}" alt="Event photo">`
+        `<img class="event__photo" src="${photo.src}" alt="${photo.description}">`
       );
     })
     .join(`\n`);
@@ -95,7 +105,7 @@ const createPhotosTemplate = (photos) => {
 
 
 const createDestinationInfoTemplate = (info) => {
-  if (!info && !info.description && !info.photos) {
+  if (!info.description && !info.photos) {
     return ``;
   }
 
@@ -104,11 +114,7 @@ const createDestinationInfoTemplate = (info) => {
       <h3 class="event__section-title  event__section-title--destination">Destination</h3>
       ${createDescriptionTemplate(info.description)}
 
-      <div class="event__photos-container">
-        <div class="event__photos-tape">
-          ${createPhotosTemplate(info.photos)}
-        </div>
-      </div>
+      ${createPhotosWrapTemplate(info.photos)}
     </section>`
   );
 };
@@ -143,18 +149,20 @@ const createControlElementsTemplate = (favoriteButtonCheck) => {
   );
 };
 
-const createFormTemplate = (waypoint, options = {}) => {
+const createFormTemplate = (waypoint, options = {}, staticData) => {
   const {currentOffers, startTime, endTime, isFavorite} = waypoint;
-  const {currentType, currentCity, offersByType, info = {}, price, mode} = options;
+  const {currentType, currentCity, info = {}, price, mode} = options;
   const transferTypes = createTypesTemplate(currentType, TYPES.transfer);
   const activityTypes = createTypesTemplate(currentType, TYPES.activity);
   const destination = `${currentType} ${TYPES.transfer.some((type) => currentType === type) ? `to` : `in`}`;
-  const destinationsList = createDestinationsTemplate(CITIES);
-  const start = moment.utc(new Date(startTime)).format(`DD/MM/YY HH:mm`);
-  const end = moment.utc(new Date(endTime)).format(`DD/MM/YY HH:mm`);
+  const {destinations, offers} = staticData;
+  const offersByType = getOffersByType(offers, currentType);
+  const destinationsList = createDestinationsTemplate(destinations);
+  const start = moment(startTime).format(`DD/MM/YY HH:mm`);
+  const end = moment(endTime).format(`DD/MM/YY HH:mm`);
   const favoriteButtonCheck = isFavorite ? `checked` : ``;
   const details = createDetailsTemplate(currentOffers, offersByType, info);
-  const isSaveButtonDisabled = CITIES.includes(currentCity) && !isNaN(price) && price > 0 ? `` : `disabled`;
+  const isSaveButtonDisabled = destinations.find((item) => item.name === currentCity) && !isNaN(price) && price > 0 ? `` : `disabled`;
   const addingMode = mode === Mode.ADDING;
   const formClassName = addingMode ? `trip-events__item` : ``;
   const cancelButtonText = addingMode ? `Cancel` : `Delete`;
@@ -224,48 +232,17 @@ const createFormTemplate = (waypoint, options = {}) => {
   );
 };
 
-const parseFormData = (formData) => {
-  const currentType = getCapitalizedString(formData.get(`event-type`));
-  const offersByType = OFFERS.filter((item) => item.type === currentType);
-  const currentOffers = [];
-  offersByType.forEach((offer) => {
-    if (formData.has(`event-offer-${offer.shortName}`)) {
-      currentOffers.push(offer);
-    }
-  });
-
-  const currentCity = formData.get(`event-destination`);
-  const currentCityInfo = CITIES_INFO.filter((city) => city.name === currentCity);
-  const description = currentCityInfo[0].description;
-  const photos = currentCityInfo[0].photos;
-  const isFavorite = !!formData.get(`event-favorite`);
-
-  return {
-    currentType,
-    currentCity,
-    offersByType,
-    currentOffers,
-    info: {
-      description,
-      photos
-    },
-    startTime: formData.get(`event-start-time`),
-    endTime: formData.get(`event-end-time`),
-    price: formData.get(`event-price`),
-    isFavorite
-  };
-};
-
 export default class Form extends AbstractSmartComponent {
-  constructor(waypoint, mode) {
+  constructor(waypoint, staticData, mode) {
     super();
     this._waypoint = waypoint;
+    this._staticData = staticData;
+    this._destinations = this._staticData.destinations;
     this._mode = mode;
     this._submitHandler = null;
     this._deleteHandler = null;
     this._currentType = waypoint.currentType;
     this._currentCity = waypoint.currentCity;
-    this._offersByType = waypoint.offersByType;
     this._info = waypoint.info;
     this._price = waypoint.price;
     this._flatpickrStartTime = null;
@@ -279,11 +256,10 @@ export default class Form extends AbstractSmartComponent {
     return createFormTemplate(this._waypoint, {
       currentType: this._currentType,
       currentCity: this._currentCity,
-      offersByType: this._offersByType,
       info: this._info,
       price: this._price,
       mode: this._mode,
-    });
+    }, this._staticData);
   }
 
   removeElement() {
@@ -325,9 +301,7 @@ export default class Form extends AbstractSmartComponent {
 
   getData() {
     const form = this.getElement();
-    const formData = new FormData(form);
-
-    return parseFormData(formData);
+    return new FormData(form);
   }
 
   setSubmitHandler(handler) {
@@ -361,8 +335,8 @@ export default class Form extends AbstractSmartComponent {
       altFormat: `d/m/y H:i`,
       enableTime: true,
       allowInput: true,
+      [`time_24hr`]: true,
       defaultDate: this._waypoint.startTime,
-      dateFormat: `d/m/y H:i`,
     });
 
     this._flatpickr = flatpickr(endTimeElement, {
@@ -370,8 +344,8 @@ export default class Form extends AbstractSmartComponent {
       altFormat: `d/m/y H:i`,
       enableTime: true,
       allowInput: true,
+      [`time_24hr`]: true,
       defaultDate: this._waypoint.endTime,
-      dateFormat: `d/m/y H:i`,
     });
   }
 
@@ -396,8 +370,7 @@ export default class Form extends AbstractSmartComponent {
 
       this._currentCity = event.target.value;
 
-      this._info = this._currentCity ? CITIES_INFO.find((city) => city.name === this._currentCity) : {};
-
+      this._info = this._currentCity ? this._destinations.find((city) => city.name === this._currentCity) : {};
       this.rerender();
     });
 
@@ -408,7 +381,6 @@ export default class Form extends AbstractSmartComponent {
       }
 
       this._price = event.target.value;
-
       this.rerender();
     });
   }
