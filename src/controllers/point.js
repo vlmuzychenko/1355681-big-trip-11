@@ -1,6 +1,9 @@
 import moment from "moment";
 import FormComponent from "../components/form.js";
+import Offer from "../models/offer.js";
 import WaypointComponent from "../components/waypoint.js";
+import WapointModel from "../models/point.js";
+import {getCapitalizedString, getOffersByType} from "../utils/common.js";
 import {render, replace, remove, RenderPosition} from "../utils/render.js";
 import {TYPES, OFFERS, Mode} from "../const.js";
 
@@ -13,15 +16,48 @@ export const EmptyWaypoint = {
     description: ``,
     photos: ``
   },
-  startTime: moment.utc(new Date()).format(),
-  endTime: moment.utc(new Date()).format(),
+  startTime: moment(new Date()).format(),
+  endTime: moment(new Date()).format(),
   price: ``,
   isFavorite: false
 };
 
+const parseFormData = (formData, staticData) => {
+  const {destinations, offers} = staticData;
+  const currentType = getCapitalizedString(formData.get(`event-type`));
+  const offersByType = getOffersByType(offers, currentType);
+  const currentOffers = [];
+  offersByType.forEach((offer) => {
+    if (formData.has(`event-offer-${offer.shortName}`)) {
+      currentOffers.push(Offer.toRAW(offer));
+    }
+  });
+
+  const currentCity = formData.get(`event-destination`);
+  const currentCityInfo = destinations.filter((city) => city.name === currentCity);
+  const description = currentCityInfo[0].description;
+  const photos = currentCityInfo[0].photos;
+  const isFavorite = !!formData.get(`event-favorite`);
+
+  return new WapointModel({
+    "type": currentType,
+    "date_from": new Date(formData.get(`event-start-time`)),
+    "date_to": new Date(formData.get(`event-end-time`)),
+    "destination": {
+      "name": currentCity,
+      "description": description,
+      "pictures": photos
+    },
+    "base_price": formData.get(`event-price`),
+    "is_favorite": isFavorite,
+    "offers": currentOffers
+  });
+};
+
 export default class PointController {
-  constructor(container, onDataChange, onViewChange) {
+  constructor(container, staticData, onDataChange, onViewChange) {
     this._container = container;
+    this._staticData = staticData;
     this._onDataChange = onDataChange;
     this._onViewChange = onViewChange;
     this._mode = Mode.DEFAULT;
@@ -38,7 +74,7 @@ export default class PointController {
     this._mode = mode;
 
     this._waypointComponent = new WaypointComponent(waypoint);
-    this._editComponent = new FormComponent(waypoint, this._mode);
+    this._editComponent = new FormComponent(waypoint, this._staticData, this._mode);
 
     this._waypointComponent.setEditButtonClickHandler(() => {
       this._replaceWaypointToEdit();
@@ -47,7 +83,8 @@ export default class PointController {
 
     this._editComponent.setSubmitHandler((event) => {
       event.preventDefault();
-      const data = this._editComponent.getData();
+      const formData = this._editComponent.getData();
+      const data = parseFormData(formData, this._staticData);
 
       this._onDataChange(this, waypoint, data);
       document.removeEventListener(`keydown`, this._onEscKeyDown);

@@ -1,23 +1,20 @@
 
 import {FilterType} from "../const.js";
-import moment from "moment";
 
 const getFutureWaypoints = (waypoints, nowDate) => {
-  const now = moment.utc(nowDate).format();
   return waypoints.filter((waypoint) => {
-    return waypoint.startTime > now;
+    return waypoint.startTime > nowDate;
   });
 };
 
 const getPastWaypoints = (waypoints, nowDate) => {
-  const now = moment.utc(nowDate).format();
   return waypoints.filter((waypoint) => {
-    return waypoint.endTime < now;
+    return waypoint.endTime < nowDate;
   });
 };
 
 export const getWaypointsByFilter = (waypoints, filterType) => {
-  const nowDate = new Date();
+  const nowDate = new Date().toISOString();
 
   switch (filterType) {
     case FilterType.FUTURE :
