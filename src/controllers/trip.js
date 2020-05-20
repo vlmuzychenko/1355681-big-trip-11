@@ -172,25 +172,34 @@ export default class TripController {
   _onDataChange(waypointController, oldData, newData) {
     if (oldData === EmptyWaypoint) {
       this._creatingWaypoint = null;
-      waypointController.destroy();
-      this._addEventComponent.enable();
+
       if (newData === null) {
+        waypointController.destroy();
+        this._addEventComponent.enable();
         this._updateWaypoints();
         if (!this._waypointsModel.getWaypoints().length) {
           render(this._container.getElement().parentElement, this._noWaypointsComponent, RenderPosition.BEFOREEND);
         }
       } else {
+        waypointController.removeHighlight();
+
         this._api.createWaypoint(newData)
           .then((waypointModel) => {
             if (!this._waypointsModel.getWaypoints().length) {
               render(this._container.getElement(), this._sortComponent, RenderPosition.BEFOREBEGIN);
             }
-
+            waypointController.destroy();
+            this._addEventComponent.enable();
             this._waypointsModel.addWaypoint(waypointModel);
             this._updateWaypoints();
+          })
+          .catch(() => {
+            waypointController.shake();
           });
       }
     } else if (newData === null) {
+      waypointController.removeHighlight();
+
       this._api.deleteWaypoint(oldData.id)
         .then(() => {
           this._waypointsModel.removeWaypoint(oldData.id);
@@ -200,8 +209,13 @@ export default class TripController {
             remove(this._sortComponent);
             render(this._container.getElement().parentElement, this._noWaypointsComponent, RenderPosition.BEFOREEND);
           }
+        })
+        .catch(() => {
+          waypointController.shake();
         });
     } else {
+      waypointController.removeHighlight();
+
       this._api.updateWaypoint(oldData.id, newData)
         .then((waypointModel) => {
           const isSuccess = this._waypointsModel.updateWaypoint(oldData.id, waypointModel);
@@ -210,6 +224,9 @@ export default class TripController {
             waypointController.render(waypointModel, WaypointControllerMode.DEFAULT);
             this._updateWaypoints();
           }
+        })
+        .catch(() => {
+          waypointController.shake();
         });
     }
   }

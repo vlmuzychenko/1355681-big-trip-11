@@ -6,6 +6,11 @@ import AbstractSmartComponent from "./abstract-smart-component.js";
 
 import "flatpickr/dist/flatpickr.min.css";
 
+const DefaultData = {
+  deleteButtonText: `Delete`,
+  saveButtonText: `Save`,
+};
+
 const createTypesTemplate = (currentType, types) => {
   return types
     .map((type) => {
@@ -151,7 +156,7 @@ const createControlElementsTemplate = (favoriteButtonCheck) => {
 
 const createFormTemplate = (waypoint, options = {}, staticData) => {
   const {currentOffers, startTime, endTime, isFavorite} = waypoint;
-  const {currentType, currentCity, info = {}, price, mode} = options;
+  const {currentType, currentCity, info = {}, price, mode, externalData} = options;
   const transferTypes = createTypesTemplate(currentType, TYPES.transfer);
   const activityTypes = createTypesTemplate(currentType, TYPES.activity);
   const destination = `${currentType} ${TYPES.transfer.some((type) => currentType === type) ? `to` : `in`}`;
@@ -165,7 +170,8 @@ const createFormTemplate = (waypoint, options = {}, staticData) => {
   const isSaveButtonDisabled = destinations.find((item) => item.name === currentCity) && !isNaN(price) && price > 0 ? `` : `disabled`;
   const addingMode = mode === Mode.ADDING;
   const formClassName = addingMode ? `trip-events__item` : ``;
-  const cancelButtonText = addingMode ? `Cancel` : `Delete`;
+  const cancelButtonText = addingMode ? `Cancel` : `${externalData.deleteButtonText}`;
+  const saveButtonText = externalData.saveButtonText;
   const controlElements = addingMode ? `` : createControlElementsTemplate(favoriteButtonCheck);
 
   return (
@@ -221,7 +227,7 @@ const createFormTemplate = (waypoint, options = {}, staticData) => {
           <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${price}">
         </div>
 
-        <button class="event__save-btn  btn  btn--blue" type="submit" ${isSaveButtonDisabled}>Save</button>
+        <button class="event__save-btn  btn  btn--blue" type="submit" ${isSaveButtonDisabled}>${saveButtonText}</button>
         <button class="event__reset-btn" type="reset">${cancelButtonText}</button>
 
         ${controlElements}
@@ -247,6 +253,7 @@ export default class Form extends AbstractSmartComponent {
     this._price = waypoint.price;
     this._flatpickrStartTime = null;
     this._flatpickrEndTime = null;
+    this._externalData = DefaultData;
 
     this._applyFlatpickr();
     this._subscribeOnEvents();
@@ -259,6 +266,7 @@ export default class Form extends AbstractSmartComponent {
       info: this._info,
       price: this._price,
       mode: this._mode,
+      externalData: this._externalData,
     }, this._staticData);
   }
 
@@ -302,6 +310,20 @@ export default class Form extends AbstractSmartComponent {
   getData() {
     const form = this.getElement();
     return new FormData(form);
+  }
+
+  setData(data) {
+    this._externalData = Object.assign({}, DefaultData, data);
+    this.rerender();
+  }
+
+  disable() {
+    const inputs = this.getElement().querySelectorAll(`input`);
+    const buttons = this.getElement().querySelectorAll(`button`);
+
+    [...inputs, ...buttons].forEach((item) => {
+      item.disabled = true;
+    });
   }
 
   setSubmitHandler(handler) {
