@@ -17,6 +17,10 @@ export default class Waypoints {
     return getWaypointsByFilter(this._waypoints, this._activeFilterType);
   }
 
+  getWaypointsAll() {
+    return this._waypoints;
+  }
+
   setWaypoints(waypoints) {
     this._waypoints = Array.from(waypoints);
     this._callHandlers(this._dataChangeHandlers);

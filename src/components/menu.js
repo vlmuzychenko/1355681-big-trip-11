@@ -1,8 +1,8 @@
 import AbstractComponent from "./abstract-component.js";
 
 export const MenuItem = {
-  STATISTICS: `trip-tabs__btn--table`,
-  TASKS: `trip-tabs__btn--stats`,
+  WAYPOINTS: `trip-tabs__btn--table`,
+  STATISTICS: `trip-tabs__btn--stats`,
 };
 
 const createMenuTemplate = () => {

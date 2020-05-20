@@ -4,6 +4,7 @@ import CostComponent from "./components/trip-cost.js";
 import FilterController from "./controllers/filter.js";
 import LoadingComponent from "./components/loading.js";
 import MenuComponent, {MenuItem} from "./components/menu.js";
+import StatisticsComponent from "./components/statistics.js";
 import TripController from "./controllers/trip.js";
 import TripDaysComponent from "./components/trip-days.js";
 import TripInfoComponent from "./components/trip-info.js";
@@ -42,13 +43,21 @@ const tripController = new TripController(tripDaysComponent, waypointsModel, api
 render(tripEventsElement, loadingComponent, RenderPosition.BEFOREEND);
 render(tripEventsElement, tripDaysComponent, RenderPosition.BEFOREEND);
 
+const statisticsComponent = new StatisticsComponent(waypointsModel);
+render(tripEventsElement, statisticsComponent, RenderPosition.AFTEREND);
+statisticsComponent.hide();
+
 menuComponent.setClickHandler((menuItem) => {
   switch (menuItem) {
+    case MenuItem.WAYPOINTS:
+      menuComponent.setActiveItem(MenuItem.WAYPOINTS);
+      tripController.show();
+      statisticsComponent.hide();
+      break;
     case MenuItem.STATISTICS:
       menuComponent.setActiveItem(MenuItem.STATISTICS);
-      break;
-    case MenuItem.TASKS:
-      menuComponent.setActiveItem(MenuItem.TASKS);
+      tripController.hide();
+      statisticsComponent.show();
       break;
   }
 });

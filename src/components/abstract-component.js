@@ -1,5 +1,7 @@
 import {createElement} from "../utils/render.js";
 
+const HIDDEN_CLASS = `visually-hidden`;
+
 export default class AbstractComponent {
   constructor() {
     if (new.target === AbstractComponent) {
@@ -23,5 +25,29 @@ export default class AbstractComponent {
 
   removeElement() {
     this._element = null;
+  }
+
+  show() {
+    if (this._element) {
+      this._element.classList.remove(HIDDEN_CLASS);
+    }
+  }
+
+  hide() {
+    if (this._element) {
+      this._element.classList.add(HIDDEN_CLASS);
+    }
+  }
+
+  showParent() {
+    if (this._element.parentElement) {
+      this._element.parentElement.classList.remove(HIDDEN_CLASS);
+    }
+  }
+
+  hideParent() {
+    if (this._element.parentElement) {
+      this._element.parentElement.classList.add(HIDDEN_CLASS);
+    }
   }
 }
