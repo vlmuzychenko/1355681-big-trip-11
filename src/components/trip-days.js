@@ -2,8 +2,14 @@ import AbstractComponent from "./abstract-component.js";
 
 const createDaysWrapTemplate = () => {
   return (
-    `<ul class="trip-days">
-    </ul>`
+    `<section class="trip-events">
+      <h2 class="visually-hidden">Trip events</h2>
+
+      <!-- Сортировка -->
+
+      <!-- Контент -->
+      <ul class="trip-days"></ul>
+    </section>`
   );
 };
 

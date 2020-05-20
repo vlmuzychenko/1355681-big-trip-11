@@ -105,3 +105,16 @@ export const Mode = {
   ADDING: `adding`,
   EDIT: `edit`,
 };
+
+export const TypeIconMap = new Map([
+  [`Taxi`, `🚕`],
+  [`Bus`, `🚌`],
+  [`Train`, `🚂`],
+  [`Ship`, `🚢`],
+  [`Transport`, `🚆`],
+  [`Drive`, `🚗`],
+  [`Flight`, `✈️`],
+  [`Check-in`, `🏨`],
+  [`Sightseeing`, `🏛`],
+  [`Restaurant`, `🍴`],
+]);

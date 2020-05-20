@@ -1,7 +1,7 @@
 import moment from "moment";
-import SortComponent from "../components/sort.js";
 import DayComponent from "../components/day.js";
 import NoWaypointsComponent from "../components/no-waypoints.js";
+import SortComponent from "../components/sort.js";
 import WaypointController, {EmptyWaypoint} from "./point.js";
 import {SortType, Mode as WaypointControllerMode} from "../const.js";
 import {render, RenderPosition, remove} from "../utils/render.js";
@@ -40,6 +40,10 @@ const renderWaypointsByDay = (container, waypoints, data, onDataChange, onViewCh
       return moment(waypoint.startTime).format(`YYYY-MM-DD`) === unrepeatedDates[i];
     });
 
+    waypointsByDay.sort((a, b) => {
+      return moment(a.startTime) - moment(b.startTime);
+    });
+
     const newWaypoint = renderDay(container, i, waypointsByDay, {destinations, offers}, onDataChange, onViewChange);
     newWaypoints = newWaypoints.concat(newWaypoint);
   }
@@ -49,10 +53,6 @@ const renderWaypointsByDay = (container, waypoints, data, onDataChange, onViewCh
 
 const renderDay = (daysListElement, index, waypointsByDay, data, onDataChange, onViewChange) => {
   const {destinations, offers} = data;
-
-  waypointsByDay.sort((a, b) => {
-    return moment(a.startTime) - moment(b.startTime);
-  });
 
   const dayComponent = new DayComponent(index, waypointsByDay);
 
@@ -92,6 +92,17 @@ export default class TripController {
 
     this._sortComponent.setSortTypeChangeHandler(this._onSortTypeChange);
     this._waypointsModel.setFilterChangeHandler(this._onFilterChange);
+  }
+
+  show() {
+    this._container.showParent();
+  }
+
+  hide() {
+    this._container.hideParent();
+    this._currentSortType = SortType.DEFAULT;
+    this._sortComponent.setDefaultSortType();
+    this._updateWaypoints();
   }
 
   render() {
@@ -162,10 +173,7 @@ export default class TripController {
 
   _onSortTypeChange(sortType) {
     this._currentSortType = sortType;
-    const sortedWaypoints = getSortedWaypoints(this._waypointsModel.getWaypoints(), this._currentSortType);
-
-    this._removeWaypoints();
-    this._renderWaypoints(sortedWaypoints);
+    this._updateWaypoints();
     this._addEventComponent.enable();
   }
 
