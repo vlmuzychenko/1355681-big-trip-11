@@ -7,6 +7,8 @@ import {getCapitalizedString, getOffersByType} from "../utils/common.js";
 import {render, replace, remove, RenderPosition} from "../utils/render.js";
 import {TYPES, OFFERS, Mode} from "../const.js";
 
+const SHAKE_ANIMATION_TIMEOUT = 600;
+
 export const EmptyWaypoint = {
   currentType: TYPES.transfer[0],
   currentCity: ``,
@@ -86,11 +88,18 @@ export default class PointController {
       const formData = this._editComponent.getData();
       const data = parseFormData(formData, this._staticData);
 
+      this._editComponent.setData({saveButtonText: `Saving...`});
+      this._editComponent.disable();
+
       this._onDataChange(this, waypoint, data);
-      document.removeEventListener(`keydown`, this._onEscKeyDown);
     });
 
-    this._editComponent.setCancelButtonClickHandler(() => this._onDataChange(this, waypoint, null));
+    this._editComponent.setCancelButtonClickHandler(() => {
+      this._editComponent.setData({deleteButtonText: `Deleting...`});
+      this._editComponent.disable();
+
+      this._onDataChange(this, waypoint, null);
+    });
 
     switch (this._mode) {
       case Mode.DEFAULT:
@@ -125,6 +134,29 @@ export default class PointController {
     remove(this._editComponent);
     remove(this._waypointComponent);
     document.removeEventListener(`keydown`, this._onEscKeyDown);
+  }
+
+  shake() {
+    this._editComponent.getElement().style.animation = `shake ${SHAKE_ANIMATION_TIMEOUT / 1000}s`;
+
+    setTimeout(() => {
+      this._editComponent.getElement().style.animation = ``;
+
+      this._editComponent.setData({
+        saveButtonText: `Save`,
+        deleteButtonText: `Delete`
+      });
+
+      this.highlight();
+    }, SHAKE_ANIMATION_TIMEOUT);
+  }
+
+  highlight() {
+    this._editComponent.getElement().classList.add(`highlight`);
+  }
+
+  removeHighlight() {
+    this._editComponent.getElement().classList.remove(`highlight`);
   }
 
   _replaceWaypointToEdit() {

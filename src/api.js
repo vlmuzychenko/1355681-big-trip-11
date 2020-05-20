@@ -72,7 +72,7 @@ const API = class {
 
   createWaypoint(data) {
     return this._load({
-      url: `points`,
+      url: `points/:1`,
       method: Method.POST,
       body: JSON.stringify(data.toRAW()),
       headers: new Headers({"Content-Type": `application/json`})
