@@ -3,8 +3,8 @@ import DayComponent from "../components/day.js";
 import NoWaypointsComponent from "../components/no-waypoints.js";
 import SortComponent from "../components/sort.js";
 import WaypointController, {EmptyWaypoint} from "./point.js";
-import {SortType, Mode as WaypointControllerMode} from "../const.js";
-import {render, RenderPosition, remove} from "../utils/render.js";
+import {SortType, RenderPosition, Mode as WaypointControllerMode} from "../const.js";
+import {render, remove} from "../utils/render.js";
 
 const getSortedWaypoints = (waypoints, sortType) => {
   let sortedWaypoints = [];
@@ -103,6 +103,7 @@ export default class TripController {
     this._currentSortType = SortType.DEFAULT;
     this._sortComponent.setDefaultSortType();
     this._updateWaypoints();
+    this._addEventComponent.enable();
   }
 
   render() {

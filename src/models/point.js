@@ -2,19 +2,19 @@ import {getCapitalizedString} from "../utils/common.js";
 import Offer from "./offer.js";
 
 export default class Waypoint {
-  constructor(data) {
-    this.id = data[`id`];
-    this.currentType = getCapitalizedString(data[`type`]);
-    this.currentCity = data[`destination`][`name`];
-    this.currentOffers = Offer.parseOffers(data[`offers`]);
+  constructor(waypoint) {
+    this.id = waypoint[`id`];
+    this.currentType = getCapitalizedString(waypoint[`type`]);
+    this.currentCity = waypoint[`destination`][`name`];
+    this.currentOffers = Offer.parseOffers(waypoint[`offers`]);
     this.info = {
-      description: data[`destination`][`description`],
-      photos: data[`destination`][`pictures`]
+      description: waypoint[`destination`][`description`],
+      photos: waypoint[`destination`][`pictures`]
     };
-    this.startTime = new Date(data[`date_from`]).toISOString();
-    this.endTime = new Date(data[`date_to`]).toISOString();
-    this.price = data[`base_price`];
-    this.isFavorite = Boolean(data[`is_favorite`]);
+    this.startTime = new Date(waypoint[`date_from`]).toISOString();
+    this.endTime = new Date(waypoint[`date_to`]).toISOString();
+    this.price = waypoint[`base_price`];
+    this.isFavorite = Boolean(waypoint[`is_favorite`]);
   }
 
   toRAW() {
@@ -34,15 +34,15 @@ export default class Waypoint {
     };
   }
 
-  static parseWaypoint(data) {
-    return new Waypoint(data);
+  static parseWaypoint(waypoint) {
+    return new Waypoint(waypoint);
   }
 
-  static parseWaypoints(data) {
-    return data.map(Waypoint.parseWaypoint);
+  static parseWaypoints(waypoint) {
+    return waypoint.map(Waypoint.parseWaypoint);
   }
 
-  static clone(data) {
-    return new Waypoint(data.toRAW());
+  static clone(waypoint) {
+    return new Waypoint(waypoint.toRAW());
   }
 }

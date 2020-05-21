@@ -1,14 +1,14 @@
 import moment from "moment";
 import flatpickr from "flatpickr";
-import {TYPES, OFFERS, Mode} from "../const.js";
+import {TYPES, Mode} from "../const.js";
 import {getCapitalizedString, getOffersByType} from "../utils/common.js";
 import AbstractSmartComponent from "./abstract-smart-component.js";
 
 import "flatpickr/dist/flatpickr.min.css";
 
 const DefaultData = {
-  deleteButtonText: `Delete`,
   saveButtonText: `Save`,
+  deleteButtonText: `Delete`
 };
 
 const createTypesTemplate = (currentType, types) => {
@@ -157,9 +157,9 @@ const createControlElementsTemplate = (favoriteButtonCheck) => {
 const createFormTemplate = (waypoint, options = {}, staticData) => {
   const {currentOffers, startTime, endTime, isFavorite} = waypoint;
   const {currentType, currentCity, info = {}, price, mode, externalData} = options;
-  const transferTypes = createTypesTemplate(currentType, TYPES.transfer);
-  const activityTypes = createTypesTemplate(currentType, TYPES.activity);
-  const destination = `${currentType} ${TYPES.transfer.some((type) => currentType === type) ? `to` : `in`}`;
+  const transferTypes = createTypesTemplate(currentType, TYPES.TRANSFERS);
+  const activityTypes = createTypesTemplate(currentType, TYPES.ACTIVITIES);
+  const destination = `${currentType} ${TYPES.TRANSFERS.some((type) => currentType === type) ? `to` : `in`}`;
   const {destinations, offers} = staticData;
   const offersByType = getOffersByType(offers, currentType);
   const destinationsList = createDestinationsTemplate(destinations);
@@ -272,13 +272,13 @@ export default class Form extends AbstractSmartComponent {
 
   removeElement() {
     if (this._flatpickrStartTime) {
-      this._flatpickr.destroy();
-      this._flatpickr = null;
+      this._flatpickrStartTime.destroy();
+      this._flatpickrStartTime = null;
     }
 
     if (this._flatpickrEndTime) {
-      this._flatpickr.destroy();
-      this._flatpickr = null;
+      this._flatpickrEndTime.destroy();
+      this._flatpickrEndTime = null;
     }
 
     super.removeElement();
@@ -340,34 +340,37 @@ export default class Form extends AbstractSmartComponent {
 
   _applyFlatpickr() {
     if (this._flatpickrStartTime) {
-      this._flatpickr.destroy();
-      this._flatpickr = null;
+      this._flatpickrStartTime.destroy();
+      this._flatpickrStartTime = null;
     }
 
     if (this._flatpickrEndTime) {
-      this._flatpickr.destroy();
-      this._flatpickr = null;
+      this._flatpickrEndTime.destroy();
+      this._flatpickrEndTime = null;
     }
 
     const startTimeElement = this.getElement().querySelectorAll(`#event-start-time-1`);
     const endTimeElement = this.getElement().querySelectorAll(`#event-end-time-1`);
 
-    this._flatpickr = flatpickr(startTimeElement, {
-      altInput: true,
-      altFormat: `d/m/y H:i`,
-      enableTime: true,
-      allowInput: true,
-      [`time_24hr`]: true,
-      defaultDate: this._waypoint.startTime,
+    this._flatpickrStartTime = this._initFlatpickr(startTimeElement, this._waypoint.startTime, null, (selectedDates, dateStr) => {
+      if (new Date(dateStr).toISOString() > this._waypoint.endTime) {
+        this._flatpickrEndTime = this._initFlatpickr(endTimeElement, dateStr, dateStr);
+      }
     });
 
-    this._flatpickr = flatpickr(endTimeElement, {
+    this._flatpickrEndTime = this._initFlatpickr(endTimeElement, this._waypoint.endTime);
+  }
+
+  _initFlatpickr(element, defaultDate, minDate, onChange) {
+    return flatpickr(element, {
       altInput: true,
       altFormat: `d/m/y H:i`,
       enableTime: true,
       allowInput: true,
       [`time_24hr`]: true,
-      defaultDate: this._waypoint.endTime,
+      defaultDate,
+      minDate,
+      onChange
     });
   }
 
@@ -378,7 +381,7 @@ export default class Form extends AbstractSmartComponent {
     eventTypeList.forEach((item) => {
       item.addEventListener(`change`, (event) => {
         this._currentType = getCapitalizedString(event.target.value);
-        this._offersByType = OFFERS.filter((offer) => offer.type === this._currentType);
+        this._offersByType = getOffersByType(this._staticData.offers, this._currentType);
 
         this.rerender();
       });

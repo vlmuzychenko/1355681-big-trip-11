@@ -1,7 +1,7 @@
 export default class Offer {
-  constructor(data, index) {
-    this.name = data[`title`];
-    this.price = data[`price`];
+  constructor(offer, index) {
+    this.name = offer[`title`];
+    this.price = offer[`price`];
     this.shortName = `offer-${index}`;
   }
 
@@ -12,11 +12,11 @@ export default class Offer {
     };
   }
 
-  static parseOffer(data, index) {
-    return new Offer(data, index);
+  static parseOffer(offer, index) {
+    return new Offer(offer, index);
   }
 
-  static parseOffers(data) {
-    return data.map(Offer.parseOffer);
+  static parseOffers(offer) {
+    return offer.map(Offer.parseOffer);
   }
 }

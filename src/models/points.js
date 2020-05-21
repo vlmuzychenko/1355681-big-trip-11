@@ -34,17 +34,29 @@ export default class Waypoints {
     this._destinations = destinations;
   }
 
-  setOffers(offers) {
-    this._offers = offers;
-  }
-
   getOffers() {
     return this._offers;
   }
 
-  setFilter(filterType) {
-    this._activeFilterType = filterType;
-    this._callHandlers(this._filterChangeHandlers);
+  setOffers(offers) {
+    this._offers = offers;
+  }
+
+  addWaypoint(waypoint) {
+    this._waypoints = [].concat(waypoint, this._waypoints);
+    this._callHandlers(this._dataChangeHandlers);
+  }
+
+  updateWaypoint(id, waypoint) {
+    const index = this._waypoints.findIndex((it) => it.id === id);
+
+    if (index === -1) {
+      return false;
+    }
+
+    this._waypoints = [...this._waypoints.slice(0, index), waypoint, ...this._waypoints.slice(index + 1)];
+
+    return true;
   }
 
   removeWaypoint(id) {
@@ -60,21 +72,9 @@ export default class Waypoints {
     return true;
   }
 
-  updateWaypoint(id, waypoint) {
-    const index = this._waypoints.findIndex((it) => it.id === id);
-
-    if (index === -1) {
-      return false;
-    }
-
-    this._waypoints = [...this._waypoints.slice(0, index), waypoint, ...this._waypoints.slice(index + 1)];
-
-    return true;
-  }
-
-  addWaypoint(waypoint) {
-    this._waypoints = [].concat(waypoint, this._waypoints);
-    this._callHandlers(this._dataChangeHandlers);
+  setFilter(filterType) {
+    this._activeFilterType = filterType;
+    this._callHandlers(this._filterChangeHandlers);
   }
 
   setFilterChangeHandler(handler) {

@@ -1,8 +1,14 @@
 import AbstractComponent from "./abstract-component";
 import Chart from "chart.js";
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import {TYPES, TypeIconMap} from '../const';
+import {TYPES, TypeIcons} from '../const';
 import moment from 'moment';
+
+const ChartName = {
+  MONEY: `MONEY`,
+  TRANSPORT: `TRANSPORT`,
+  TIME_SPENT: `TIME SPENT`
+};
 
 const ChartSettings = {
   BAR_HEIGHT: 55,
@@ -35,23 +41,12 @@ const createStatisticsTemplate = () => {
   );
 };
 
-export const moneyChart = (ctx, waypoints) => {
-  const parseData = waypoints
-    .reduce((sum, waypoint) => {
-      sum[waypoint.currentType] = (sum[waypoint.currentType] || 0) + waypoint.price;
-      return sum;
-    }, {});
-
-  const sortedData = Object.entries(parseData).sort((a, b) => b[1] - a[1]);
-  const data = Object.fromEntries(sortedData);
-
-  ctx.height = ChartSettings.BAR_HEIGHT * sortedData.length;
-
+const initChart = (ctx, data, name, format) => {
   return new Chart(ctx, {
     plugins: [ChartDataLabels],
     type: `horizontalBar`,
     data: {
-      labels: Object.keys(data).map((label) => `${TypeIconMap.get(label)} ${label.toUpperCase()}`),
+      labels: Object.keys(data).map((label) => `${TypeIcons.get(label)} ${label.toUpperCase()}`),
       datasets: [{
         data: Object.values(data),
         backgroundColor: `#ffffff`,
@@ -68,12 +63,12 @@ export const moneyChart = (ctx, waypoints) => {
           color: `#000000`,
           anchor: `end`,
           align: `start`,
-          formatter: (val) => `${val} €`
+          formatter: format
         }
       },
       title: {
         display: true,
-        text: `MONEY`,
+        text: name,
         fontColor: `#000000`,
         fontSize: ChartSettings.TITLE_FONT_SIZE,
         position: `left`
@@ -114,6 +109,22 @@ export const moneyChart = (ctx, waypoints) => {
       }
     }
   });
+};
+
+export const moneyChart = (ctx, waypoints) => {
+  const parseData = waypoints
+    .reduce((sum, waypoint) => {
+      sum[waypoint.currentType] = (sum[waypoint.currentType] || 0) + waypoint.price;
+      return sum;
+    }, {});
+
+  const sortedData = Object.entries(parseData).sort((a, b) => b[1] - a[1]);
+  const data = Object.fromEntries(sortedData);
+
+  ctx.height = ChartSettings.BAR_HEIGHT * sortedData.length;
+
+  const formatter = (val) => `${val} €`;
+  return initChart(ctx, data, ChartName.MONEY, formatter);
 };
 
 export const timeSpendChart = (ctx, waypoints) => {
@@ -132,77 +143,12 @@ export const timeSpendChart = (ctx, waypoints) => {
 
   ctx.height = ChartSettings.BAR_HEIGHT * sortedData.length;
 
-  return new Chart(ctx, {
-    plugins: [ChartDataLabels],
-    type: `horizontalBar`,
-    data: {
-      labels: Object.keys(data).map((label) => `${TypeIconMap.get(label)} ${label.toUpperCase()}`),
-      datasets: [{
-        data: Object.values(data),
-        backgroundColor: `#ffffff`,
-        hoverBackgroundColor: `#ffffff`,
-        anchor: `start`,
-        barThickness: ChartSettings.BAR_THICKNESS,
-        minBarLength: ChartSettings.MIN_BAR_LENGTH,
-      }],
-    },
-    options: {
-      plugins: {
-        datalabels: {
-          fontSize: ChartSettings.LABELS_FONT_SIZE,
-          color: `#000000`,
-          anchor: `end`,
-          align: `start`,
-          formatter: (val) => `${val} H`
-        }
-      },
-      title: {
-        display: true,
-        text: `TIME SPEND`,
-        fontColor: `#000000`,
-        fontSize: ChartSettings.TITLE_FONT_SIZE,
-        position: `left`
-      },
-      layout: {
-        padding: {
-          left: ChartSettings.LAYOUT_PADDING_LEFT,
-        }
-      },
-      scales: {
-        yAxes: [{
-          ticks: {
-            fontColor: `#000000`,
-            padding: ChartSettings.SCALES_Y_PADDING,
-            fontSize: ChartSettings.SCALES_Y_FONTSIZE,
-          },
-          gridLines: {
-            display: false,
-            drawBorder: false
-          },
-        }],
-        xAxes: [{
-          ticks: {
-            display: false,
-            beginAtZero: true,
-          },
-          gridLines: {
-            display: false,
-            drawBorder: false
-          },
-        }],
-      },
-      legend: {
-        display: false
-      },
-      tooltips: {
-        enabled: false,
-      }
-    }
-  });
+  const formatter = (val) => `${val} H`;
+  return initChart(ctx, data, ChartName.TIME_SPENT, formatter);
 };
 
 export const transportChart = (ctx, waypoints) => {
-  const types = [...TYPES.transfer, ...TYPES.activity];
+  const types = [...TYPES.TRANSFERS, ...TYPES.ACTIVITIES];
 
   const parseData = waypoints
     .filter((waypoint) => types.includes(waypoint.currentType))
@@ -216,73 +162,8 @@ export const transportChart = (ctx, waypoints) => {
 
   ctx.height = ChartSettings.BAR_HEIGHT * sortedData.length;
 
-  return new Chart(ctx, {
-    plugins: [ChartDataLabels],
-    type: `horizontalBar`,
-    data: {
-      labels: Object.keys(data).map((label) => `${TypeIconMap.get(label)} ${label.toUpperCase()}`),
-      datasets: [{
-        data: Object.values(data),
-        backgroundColor: `#ffffff`,
-        hoverBackgroundColor: `#ffffff`,
-        anchor: `start`,
-        barThickness: ChartSettings.BAR_THICKNESS,
-        minBarLength: ChartSettings.MIN_BAR_LENGTH,
-      }]
-    },
-    options: {
-      plugins: {
-        datalabels: {
-          fontSize: ChartSettings.LABELS_FONT_SIZE,
-          color: `#000000`,
-          anchor: `end`,
-          align: `start`,
-          formatter: (val) => `${val}x`
-        }
-      },
-      title: {
-        display: true,
-        text: `TRANSPORT`,
-        fontColor: `#000000`,
-        fontSize: ChartSettings.TITLE_FONT_SIZE,
-        position: `left`
-      },
-      layout: {
-        padding: {
-          left: ChartSettings.LAYOUT_PADDING_LEFT,
-        }
-      },
-      scales: {
-        yAxes: [{
-          ticks: {
-            fontColor: `#000000`,
-            padding: ChartSettings.SCALES_Y_PADDING,
-            fontSize: ChartSettings.SCALES_Y_FONTSIZE,
-          },
-          gridLines: {
-            display: false,
-            drawBorder: false
-          },
-        }],
-        xAxes: [{
-          ticks: {
-            display: false,
-            beginAtZero: true,
-          },
-          gridLines: {
-            display: false,
-            drawBorder: false
-          },
-        }],
-      },
-      legend: {
-        display: false
-      },
-      tooltips: {
-        enabled: false,
-      }
-    }
-  });
+  const formatter = (val) => `${val}x`;
+  return initChart(ctx, data, ChartName.TRANSPORT, formatter);
 };
 
 export default class Statistics extends AbstractComponent {
@@ -315,27 +196,19 @@ export default class Statistics extends AbstractComponent {
     const ctxTimeSpend = element.querySelector(`.statistics__chart--time`);
 
     const waypoints = this._waypointsModel.getWaypointsAll();
+    this._resetCharts([this._moneyChart, this._transportChart, this._timeSpendChart]);
 
-    this._resetCharts();
     this._moneyChart = moneyChart(ctxMoney, waypoints);
     this._transportChart = transportChart(ctxTransport, waypoints);
     this._timeSpendChart = timeSpendChart(ctxTimeSpend, waypoints);
   }
 
-  _resetCharts() {
-    if (this._moneyChart) {
-      this._moneyChart.destroy();
-      this._moneyChart = null;
-    }
-
-    if (this._transportChart) {
-      this._transportChart.destroy();
-      this._transportChart = null;
-    }
-
-    if (this._timeSpendChart) {
-      this._timeSpendChart.destroy();
-      this._timeSpendChart = null;
-    }
+  _resetCharts(charts) {
+    charts.forEach((chart) => {
+      if (chart) {
+        chart.destroy();
+        chart = null;
+      }
+    });
   }
 }

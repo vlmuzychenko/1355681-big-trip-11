@@ -4,15 +4,14 @@ import Offer from "../models/offer.js";
 import WaypointComponent from "../components/waypoint.js";
 import WapointModel from "../models/point.js";
 import {getCapitalizedString, getOffersByType} from "../utils/common.js";
-import {render, replace, remove, RenderPosition} from "../utils/render.js";
-import {TYPES, OFFERS, Mode} from "../const.js";
+import {render, replace, remove} from "../utils/render.js";
+import {TYPES, Mode, RenderPosition} from "../const.js";
 
 const SHAKE_ANIMATION_TIMEOUT = 600;
 
 export const EmptyWaypoint = {
-  currentType: TYPES.transfer[0],
+  currentType: TYPES.TRANSFERS[0],
   currentCity: ``,
-  offersByType: OFFERS.filter((item) => item.type === TYPES.transfer[0]),
   currentOffers: [],
   info: {
     description: ``,

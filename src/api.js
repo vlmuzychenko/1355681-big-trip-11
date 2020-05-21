@@ -1,13 +1,7 @@
 import Waypoint from "./models/point.js";
 import Destination from "./models/destination.js";
 import Offer from "./models/offer.js";
-
-const Method = {
-  GET: `GET`,
-  POST: `POST`,
-  PUT: `PUT`,
-  DELETE: `DELETE`
-};
+import {Method} from "./const.js";
 
 const checkStatus = (response) => {
   if (response.status >= 200 && response.status < 300) {
@@ -72,7 +66,7 @@ const API = class {
 
   createWaypoint(data) {
     return this._load({
-      url: `points/:1`,
+      url: `points/`,
       method: Method.POST,
       body: JSON.stringify(data.toRAW()),
       headers: new Headers({"Content-Type": `application/json`})
@@ -83,7 +77,7 @@ const API = class {
 
   updateWaypoint(id, data) {
     return this._load({
-      url: `points/${id}`,
+      url: `points/:${id}`,
       method: Method.PUT,
       body: JSON.stringify(data.toRAW()),
       headers: new Headers({"Content-Type": `application/json`})

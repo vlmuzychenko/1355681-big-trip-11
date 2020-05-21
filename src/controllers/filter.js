@@ -1,6 +1,6 @@
 import FilterComponent from "../components/filters.js";
-import {FilterType} from "../const.js";
-import {render, replace, RenderPosition} from "../utils/render.js";
+import {FilterType, RenderPosition} from "../const.js";
+import {render, replace} from "../utils/render.js";
 
 export default class FilterController {
   constructor(container, waypointsModel) {

@@ -1,6 +1,5 @@
 import API from "./api.js";
 import AddEventComponent from "./components/add-event.js";
-import CostComponent from "./components/trip-cost.js";
 import FilterController from "./controllers/filter.js";
 import LoadingComponent from "./components/loading.js";
 import MenuComponent, {MenuItem} from "./components/menu.js";
@@ -8,9 +7,9 @@ import StatisticsComponent from "./components/statistics.js";
 import TripController from "./controllers/trip.js";
 import TripDaysComponent from "./components/trip-days.js";
 import TripInfoComponent from "./components/trip-info.js";
-import TripInfoWrapComponent from "./components/trip-info-wrap.js";
 import WaypointsModel from "./models/points.js";
-import {render, remove, RenderPosition} from "./utils/render.js";
+import {render, remove} from "./utils/render.js";
+import {RenderPosition} from "./const.js";
 
 const AUTHORIZATION = `Basic KLDLdlakalskkladk3423=`;
 const END_POINT = `https://11.ecmascript.pages.academy/big-trip/`;
@@ -19,15 +18,13 @@ const api = new API(END_POINT, AUTHORIZATION);
 const waypointsModel = new WaypointsModel();
 
 const tripHeaderElement = document.querySelector(`.trip-main`);
+const tripControlsElement = document.querySelector(`.trip-controls`);
+const tripEventsElement = document.querySelector(`.trip-events`);
+
 const addEventComponent = new AddEventComponent();
-render(tripHeaderElement, new TripInfoWrapComponent(), RenderPosition.AFTERBEGIN);
+render(tripHeaderElement, new TripInfoComponent(), RenderPosition.AFTERBEGIN);
 render(tripHeaderElement, addEventComponent, RenderPosition.BEFOREEND);
 
-const tripInfoWrapElement = document.querySelector(`.trip-info`);
-render(tripInfoWrapElement, new TripInfoComponent(), RenderPosition.BEFOREEND);
-render(tripInfoWrapElement, new CostComponent(), RenderPosition.BEFOREEND);
-
-const tripControlsElement = document.querySelector(`.trip-controls`);
 const menuTitleElement = tripControlsElement.children[0];
 const filterController = new FilterController(tripControlsElement, waypointsModel);
 filterController.render();
@@ -35,7 +32,6 @@ filterController.render();
 const menuComponent = new MenuComponent();
 render(menuTitleElement, menuComponent, RenderPosition.AFTEREND);
 
-const tripEventsElement = document.querySelector(`.trip-events`);
 const loadingComponent = new LoadingComponent();
 const tripDaysComponent = new TripDaysComponent();
 const tripController = new TripController(tripDaysComponent, waypointsModel, api, addEventComponent);
