@@ -77,7 +77,7 @@ const API = class {
 
   updateWaypoint(id, data) {
     return this._load({
-      url: `points/:${id}`,
+      url: `points/${id}`,
       method: Method.PUT,
       body: JSON.stringify(data.toRAW()),
       headers: new Headers({"Content-Type": `application/json`})
