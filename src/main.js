@@ -21,8 +21,8 @@ const tripHeaderElement = document.querySelector(`.trip-main`);
 const tripControlsElement = document.querySelector(`.trip-controls`);
 const tripEventsElement = document.querySelector(`.trip-events`);
 
+const tripInfoComponent = new TripInfoComponent(waypointsModel);
 const addEventComponent = new AddEventComponent();
-render(tripHeaderElement, new TripInfoComponent(), RenderPosition.AFTERBEGIN);
 render(tripHeaderElement, addEventComponent, RenderPosition.BEFOREEND);
 
 const menuTitleElement = tripControlsElement.children[0];
@@ -64,6 +64,11 @@ addEventComponent.setClickHandler(() => {
   addEventComponent.disable();
 });
 
+waypointsModel.setDataChangeHandler(() => {
+  remove(tripInfoComponent);
+  render(tripHeaderElement, tripInfoComponent, RenderPosition.AFTERBEGIN);
+});
+
 api.getData()
   .then((data) => {
     const {destinations, offers, waypoints} = data;
@@ -71,5 +76,6 @@ api.getData()
     waypointsModel.setDestinations(destinations);
     waypointsModel.setOffers(offers);
     remove(loadingComponent);
+    render(tripHeaderElement, tripInfoComponent, RenderPosition.AFTERBEGIN);
     tripController.render();
   });

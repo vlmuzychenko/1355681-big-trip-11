@@ -1,5 +1,7 @@
 import {getWaypointsByFilter} from "../utils/filter.js";
+import {getSortedWaypoints} from "../utils/common.js";
 import {FilterType} from "../const.js";
+
 
 export default class Waypoints {
   constructor() {
@@ -42,6 +44,38 @@ export default class Waypoints {
     this._offers = offers;
   }
 
+  getTripPrice() {
+    const prices = this._waypoints.map((waypoint) => waypoint.price);
+    const offers = [];
+
+    this._waypoints.forEach((waypoint) => {
+      offers.push(...waypoint.currentOffers);
+    });
+
+    const offerPrices = offers.map((offer) => offer.price);
+
+    return [...prices, ...offerPrices]
+      .reduce((accumulator, price) => accumulator + price);
+  }
+
+  getTripWay() {
+    const sortedWaypoints = getSortedWaypoints(this._waypoints);
+
+    return sortedWaypoints.map((waypoint) => waypoint.currentCity);
+  }
+
+  getTripStartDate() {
+    const sortedWaypoints = getSortedWaypoints(this._waypoints);
+
+    return sortedWaypoints[0].startTime;
+  }
+
+  getTripEndDate() {
+    const sortedWaypoints = getSortedWaypoints(this._waypoints);
+
+    return sortedWaypoints[sortedWaypoints.length - 1].endTime;
+  }
+
   addWaypoint(waypoint) {
     this._waypoints = [].concat(waypoint, this._waypoints);
     this._callHandlers(this._dataChangeHandlers);
@@ -55,6 +89,7 @@ export default class Waypoints {
     }
 
     this._waypoints = [...this._waypoints.slice(0, index), waypoint, ...this._waypoints.slice(index + 1)];
+    this._callHandlers(this._dataChangeHandlers);
 
     return true;
   }

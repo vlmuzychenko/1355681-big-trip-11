@@ -408,5 +408,15 @@ export default class Form extends AbstractSmartComponent {
       this._price = event.target.value;
       this.rerender();
     });
+
+    const eventInputStart = element.querySelector(`#event-start-time-1`);
+    eventInputStart.addEventListener(`change`, (event) => {
+      this._waypoint.startTime = new Date(event.target.value);
+    });
+
+    const eventInputEnd = element.querySelector(`#event-end-time-1`);
+    eventInputEnd.addEventListener(`change`, (event) => {
+      this._waypoint.endTime = new Date(event.target.value);
+    });
   }
 }

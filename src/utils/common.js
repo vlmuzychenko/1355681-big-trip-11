@@ -15,3 +15,11 @@ export const getOffersByType = (allOffers, type) => {
 export const getSringWithoutPrefix = (string, prefix) => {
   return string.substring(prefix.length);
 };
+
+export const getSortedWaypoints = (waypoints) => {
+  const sortedWaypoints = [...waypoints].sort((a, b) => {
+    return new Date(a.startTime) - new Date(b.startTime);
+  });
+
+  return sortedWaypoints;
+};
